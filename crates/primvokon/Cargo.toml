@@ -1,0 +1,11 @@
+[package]
+name = "primvokon"
+description = "Agentic remote for PiKVM (GTK4 + libadwaita)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+pikvm = { path = "../pikvm" }
+primvokon-core = { path = "../primvokon-core" }

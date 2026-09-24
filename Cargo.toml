@@ -1,0 +1,43 @@
+[workspace]
+resolver = "2"
+members = ["crates/pikvm", "crates/primvokon-core", "crates/primvokon"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/jonas-bickel/primvokon"
+rust-version = "1.85"
+
+[workspace.dependencies]
+anyhow = "1"
+thiserror = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "fs", "io-util"] }
+tokio-util = "0.7"
+futures-util = "0.3"
+async-channel = "2"
+reqwest = { version = "0.13", default-features = false, features = ["native-tls", "json", "stream", "charset", "http2", "form", "query"] }
+native-tls = "0.2"
+tokio-tungstenite = { version = "0.30", features = ["native-tls"] }
+url = { version = "2", features = ["serde"] }
+bytes = "1"
+base64 = "0.22"
+totp-rs = "6"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+chrono = { version = "0.4", features = ["serde"] }
+rusqlite = { version = "0.40", features = ["bundled"] }
+toml = "0.9"
+dirs = "6"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png"] }
+sha2 = "0.10"
+async-trait = "0.1"
+uuid = { version = "1", features = ["v4"] }
+oo7 = "0.6"
+
+[profile.release]
+lto = "thin"
+codegen-units = 4
+strip = true
