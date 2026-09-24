@@ -1,0 +1,114 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PvWindow : Adw.ApplicationWindow {
+  title: "PRIMVOKON";
+  default-width: 1200;
+  default-height: 800;
+  width-request: 360;
+  height-request: 400;
+
+  Adw.Breakpoint {
+    condition ("max-width: 760sp")
+    setters {
+      header_bar.title-widget: null;
+      switcher_bar.reveal: true;
+    }
+  }
+
+  content: Adw.ToastOverlay toast_overlay {
+    Adw.ToolbarView {
+      [top]
+      Adw.HeaderBar header_bar {
+        [start]
+        MenuButton profile_button {
+          icon-name: "network-server-symbolic";
+          tooltip-text: _("PiKVM profile");
+          menu-model: profile_menu;
+        }
+
+        [start]
+        Label connection_pill {
+          label: _("Offline");
+          styles ["pill", "error"]
+        }
+
+        title-widget: Adw.ViewSwitcher {
+          stack: view_stack;
+          policy: wide;
+        };
+
+        [end]
+        MenuButton {
+          icon-name: "open-menu-symbolic";
+          tooltip-text: _("Main menu");
+          primary: true;
+          menu-model: primary_menu;
+        }
+
+        [end]
+        Label services_pill {
+          visible: false;
+          styles ["pill", "accent"]
+        }
+      }
+
+      content: Adw.ViewStack view_stack {
+        vexpand: true;
+      };
+
+      [bottom]
+      Adw.ViewSwitcherBar switcher_bar {
+        stack: view_stack;
+      }
+    }
+  };
+}
+
+menu primary_menu {
+  section {
+    item {
+      label: _("_Preferences");
+      action: "app.preferences";
+    }
+    item {
+      label: _("_Keyboard Shortcuts");
+      action: "win.show-help-overlay";
+    }
+    item {
+      label: _("_About PRIMVOKON");
+      action: "app.about";
+    }
+  }
+  section {
+    item {
+      label: _("_Quit");
+      action: "app.quit";
+    }
+  }
+}
+
+menu profile_menu {
+  section profiles_section {
+  }
+  section {
+    item {
+      label: _("Connect");
+      action: "win.connect";
+    }
+    item {
+      label: _("Disconnect");
+      action: "win.disconnect";
+    }
+    item {
+      label: _("Sign out (invalidate token)");
+      action: "win.logout";
+    }
+  }
+  section {
+    item {
+      label: _("Connection settings…");
+      action: "app.preferences";
+    }
+  }
+}

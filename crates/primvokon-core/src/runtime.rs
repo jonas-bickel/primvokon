@@ -37,3 +37,9 @@ pub fn block_on<F: Future>(fut: F) -> F::Output {
 pub fn handle() -> tokio::runtime::Handle {
     runtime().handle().clone()
 }
+
+/// Enter the runtime context on the current thread so that `tokio::spawn` works from GTK
+/// callbacks. Keep the guard alive while spawning.
+pub fn enter() -> tokio::runtime::EnterGuard<'static> {
+    runtime().enter()
+}

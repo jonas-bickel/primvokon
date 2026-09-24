@@ -1,0 +1,161 @@
+using Gtk 4.0;
+using Adw 1;
+using Gdk 4.0;
+
+template $PvConsolePage : Adw.Bin {
+  Box {
+    orientation: vertical;
+    spacing: 6;
+    margin-top: 6;
+    margin-bottom: 6;
+    margin-start: 6;
+    margin-end: 6;
+
+    Box toolbar {
+      spacing: 6;
+
+      Label video_pill {
+        label: _("No video");
+        styles ["pill", "warning"]
+      }
+
+      Label hid_pill {
+        label: _("HID");
+        styles ["pill"]
+      }
+
+      Label atx_pill {
+        label: _("Power");
+        styles ["pill"]
+      }
+
+      Label msd_pill {
+        label: _("MSD");
+        styles ["pill"]
+      }
+
+      Box {
+        hexpand: true;
+      }
+
+      ToggleButton capture_toggle {
+        icon-name: "input-keyboard-symbolic";
+        tooltip-text: _("Forward keyboard and mouse to the host");
+        active: true;
+      }
+
+      Button power_button {
+        icon-name: "system-shutdown-symbolic";
+        tooltip-text: _("Short press on the power button");
+      }
+
+      Button reset_button {
+        icon-name: "view-refresh-symbolic";
+        tooltip-text: _("Press the reset button");
+      }
+
+      Button cad_button {
+        label: "Ctrl+Alt+Del";
+        tooltip-text: _("Send Ctrl+Alt+Del");
+      }
+
+      Button paste_button {
+        icon-name: "edit-paste-symbolic";
+        tooltip-text: _("Type text on the host");
+      }
+
+      MenuButton stream_button {
+        icon-name: "emblem-system-symbolic";
+        tooltip-text: _("Stream parameters");
+        popover: stream_popover;
+      }
+
+      Button fullscreen_button {
+        icon-name: "view-fullscreen-symbolic";
+        tooltip-text: _("Fullscreen");
+        action-name: "win.fullscreen";
+      }
+    }
+
+    Overlay video_overlay {
+      vexpand: true;
+      hexpand: true;
+
+      child: Picture video {
+        content-fit: contain;
+        focusable: true;
+        can-focus: true;
+        cursor: Gdk.Cursor { name: "crosshair"; };
+        styles ["pv-video"]
+      };
+
+      [overlay]
+      Adw.StatusPage placeholder {
+        icon-name: "network-server-symbolic";
+        title: _("No PiKVM configured");
+        description: _("Add a connection profile to see the host screen.");
+        valign: center;
+        halign: center;
+
+        Button placeholder_button {
+          label: _("Open settings");
+          action-name: "app.preferences";
+          halign: center;
+          styles ["pill", "suggested-action"]
+        }
+      }
+
+      [overlay]
+      Label banner {
+        visible: false;
+        valign: start;
+        halign: center;
+        margin-top: 12;
+        styles ["pill", "warning"]
+      }
+    }
+  }
+}
+
+Popover stream_popover {
+  Box {
+    orientation: vertical;
+    spacing: 8;
+    margin-top: 8;
+    margin-bottom: 8;
+    margin-start: 8;
+    margin-end: 8;
+    width-request: 260;
+
+    Label {
+      label: _("Stream parameters");
+      styles ["heading"]
+    }
+
+    Adw.SpinRow quality_row {
+      title: _("JPEG quality");
+      adjustment: Adjustment { lower: 1; upper: 100; step-increment: 5; value: 80; };
+    }
+
+    Adw.SpinRow fps_row {
+      title: _("Desired FPS");
+      adjustment: Adjustment { lower: 0; upper: 120; step-increment: 5; value: 30; };
+    }
+
+    Adw.SpinRow bitrate_row {
+      title: _("H.264 kbps");
+      adjustment: Adjustment { lower: 25; upper: 20000; step-increment: 250; value: 5000; };
+    }
+
+    Adw.SpinRow gop_row {
+      title: _("H.264 GOP");
+      adjustment: Adjustment { lower: 0; upper: 60; step-increment: 1; value: 30; };
+    }
+
+    Button apply_stream_button {
+      label: _("Apply");
+      halign: end;
+      styles ["suggested-action"]
+    }
+  }
+}

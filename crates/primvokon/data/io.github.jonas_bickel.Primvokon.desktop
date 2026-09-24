@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=PRIMVOKON
+Comment=Agentic remote for PiKVM
+Exec=primvokon
+Icon=io.github.jonas_bickel.Primvokon
+Terminal=false
+Type=Application
+Categories=Network;RemoteAccess;GTK;
+Keywords=PiKVM;KVM;remote;
+StartupNotify=true
