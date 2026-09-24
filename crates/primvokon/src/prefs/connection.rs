@@ -71,7 +71,10 @@ macro_rules! weak_call {
 
 impl ProfileEditor {
     fn build() -> Rc<Self> {
-        let selector_group = util::card("Profiles", Some("Each profile is one PiKVM. Tailscale hosts work like any other host name."));
+        let selector_group = util::card(
+            "Profiles",
+            Some("Each profile is one PiKVM. Tailscale hosts work like any other host name."),
+        );
         let profile_combo = util::combo_row(&selector_group, "Active profile", None, &[], 0);
         let add = util::button("New profile");
         let remove = util::destructive_button("Delete");
@@ -81,12 +84,25 @@ impl ProfileEditor {
 
         let group = util::card("PiKVM", None);
         let name = util::entry_row(&group, "Profile name", "");
-        let url = util::entry_row(&group, "Base URL (https://pikvm.local, https://100.64.0.5, http://host:8080/prefix)", "");
+        let url = util::entry_row(
+            &group,
+            "Base URL (https://pikvm.local, https://100.64.0.5, http://host:8080/prefix)",
+            "",
+        );
         let labels: Vec<&str> = AuthMethod::ALL.iter().map(|m| m.label()).collect();
-        let auth = util::combo_row(&group, "Authentication", Some("How each request is authenticated"), &labels, 0);
+        let auth = util::combo_row(
+            &group,
+            "Authentication",
+            Some("How each request is authenticated"),
+            &labels,
+            0,
+        );
         let user = util::entry_row(&group, "User", "admin");
 
-        let secrets_group = util::card("Credentials", Some("Stored in the Secret Service, never in settings.toml"));
+        let secrets_group = util::card(
+            "Credentials",
+            Some("Stored in the Secret Service, never in settings.toml"),
+        );
         let password = util::password_row(&secrets_group, "Password", "");
         let totp_mode = util::combo_row(
             &secrets_group,
@@ -113,7 +129,10 @@ impl ProfileEditor {
         let arow = adw::ActionRow::builder().title("Actions").build();
         arow.add_suffix(&util::button_box(&[&test, &save, &connect]));
         actions_group.add(&arow);
-        let test_result = adw::ActionRow::builder().title("Diagnostics").subtitle("Not tested yet").build();
+        let test_result = adw::ActionRow::builder()
+            .title("Diagnostics")
+            .subtitle("Not tested yet")
+            .build();
         actions_group.add(&test_result);
 
         let editor = Rc::new(Self {
@@ -165,24 +184,30 @@ impl ProfileEditor {
             let Some(e) = weak.upgrade() else { return };
             let Some(p) = e.editing.borrow().clone() else { return };
             let weak2 = weak.clone();
-            util::confirm(b, "Delete profile?", &format!("Remove “{}” and its stored secrets.", p.name), "Delete", move || {
-                let keys = [p.secret_key_password(), p.secret_key_totp(), p.secret_key_token()];
-                if let Some(secrets) = state().secrets() {
-                    spawn_then(
-                        async move {
-                            for k in keys {
-                                let _ = secrets.delete(&k).await;
-                            }
-                        },
-                        |_| {},
-                    );
-                }
-                state().update_settings(|s| s.remove_profile(&p.id));
-                state().connection.disconnect();
-                if let Some(e) = weak2.upgrade() {
-                    e.load_active();
-                }
-            });
+            util::confirm(
+                b,
+                "Delete profile?",
+                &format!("Remove “{}” and its stored secrets.", p.name),
+                "Delete",
+                move || {
+                    let keys = [p.secret_key_password(), p.secret_key_totp(), p.secret_key_token()];
+                    if let Some(secrets) = state().secrets() {
+                        spawn_then(
+                            async move {
+                                for k in keys {
+                                    let _ = secrets.delete(&k).await;
+                                }
+                            },
+                            |_| {},
+                        );
+                    }
+                    state().update_settings(|s| s.remove_profile(&p.id));
+                    state().connection.disconnect();
+                    if let Some(e) = weak2.upgrade() {
+                        e.load_active();
+                    }
+                },
+            );
         });
         let weak = Rc::downgrade(&editor);
         save.connect_clicked(weak_call!(weak, |e| {
@@ -200,9 +225,13 @@ impl ProfileEditor {
             }
         });
         let weak = Rc::downgrade(&editor);
-        editor.auth.connect_selected_notify(weak_call!(weak, |e| e.update_visibility()));
+        editor
+            .auth
+            .connect_selected_notify(weak_call!(weak, |e| e.update_visibility()));
         let weak = Rc::downgrade(&editor);
-        editor.totp_mode.connect_selected_notify(weak_call!(weak, |e| e.update_visibility()));
+        editor
+            .totp_mode
+            .connect_selected_notify(weak_call!(weak, |e| e.update_visibility()));
         editor
     }
 
@@ -278,7 +307,11 @@ impl ProfileEditor {
     }
 
     fn collect(&self) -> anyhow::Result<ConnectionProfile> {
-        let mut p = self.editing.borrow().clone().unwrap_or_else(|| ConnectionProfile::new("New PiKVM"));
+        let mut p = self
+            .editing
+            .borrow()
+            .clone()
+            .unwrap_or_else(|| ConnectionProfile::new("New PiKVM"));
         p.name = self.name.text().trim().to_string();
         if p.name.is_empty() {
             p.name = "PiKVM".into();

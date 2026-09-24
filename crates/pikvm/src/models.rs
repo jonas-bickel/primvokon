@@ -560,7 +560,10 @@ impl StreamerState {
     }
 
     pub fn resolution(&self) -> Option<Resolution> {
-        self.streamer.as_ref().map(|s| s.source.resolution.clone()).filter(|r| r.width > 0)
+        self.streamer
+            .as_ref()
+            .map(|s| s.source.resolution.clone())
+            .filter(|r| r.width > 0)
     }
 
     pub fn captured_fps(&self) -> u32 {

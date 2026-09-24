@@ -32,7 +32,9 @@ impl SwitchApi<'_> {
 
     /// `POST /api/switch/set_active?port=` – continuous (`0..19`) or `unit.port` float numbering.
     pub async fn set_active(&self, port: f64) -> Result<()> {
-        self.0.post_ok("/api/switch/set_active", Query::new().push("port", fmt_port(port))).await
+        self.0
+            .post_ok("/api/switch/set_active", Query::new().push("port", fmt_port(port)))
+            .await
     }
 
     /// `POST /api/switch/set_beacon?state=&port=|uplink=|downlink=`
@@ -63,7 +65,11 @@ impl SwitchApi<'_> {
     pub async fn set_colors(&self, beacon: &str) -> Result<()> {
         let _: serde_json::Value = self
             .0
-            .post_result("/api/switch/set_colors", Query::new().push("beacon", beacon), Body::Text(beacon.to_string()))
+            .post_result(
+                "/api/switch/set_colors",
+                Query::new().push("beacon", beacon),
+                Body::Text(beacon.to_string()),
+            )
             .await?;
         Ok(())
     }
@@ -88,18 +94,24 @@ impl SwitchApi<'_> {
 
     /// `POST /api/switch/edids/remove?id=`
     pub async fn edid_remove(&self, id: &str) -> Result<()> {
-        self.0.post_ok("/api/switch/edids/remove", Query::new().push("id", id)).await
+        self.0
+            .post_ok("/api/switch/edids/remove", Query::new().push("id", id))
+            .await
     }
 
     /// `POST /api/switch/atx/power?port=&action=`
     pub async fn atx_power(&self, port: f64, action: PowerAction) -> Result<()> {
-        let q = Query::new().push("port", fmt_port(port)).push("action", action.as_str());
+        let q = Query::new()
+            .push("port", fmt_port(port))
+            .push("action", action.as_str());
         self.0.post_ok("/api/switch/atx/power", q).await
     }
 
     /// `POST /api/switch/atx/click?port=&button=`
     pub async fn atx_click(&self, port: f64, button: AtxButton) -> Result<()> {
-        let q = Query::new().push("port", fmt_port(port)).push("button", button.as_str());
+        let q = Query::new()
+            .push("port", fmt_port(port))
+            .push("button", button.as_str());
         self.0.post_ok("/api/switch/atx/click", q).await
     }
 }

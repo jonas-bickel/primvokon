@@ -17,7 +17,9 @@ use super::detectors::{ChangeDetector, Sample};
 pub enum WatcherEvent {
     Started,
     /// A sample was taken (for the "last check" label).
-    Sampled { ts: i64 },
+    Sampled {
+        ts: i64,
+    },
     Change(WatchEvent),
     Error(String),
     Stopped,
@@ -55,9 +57,7 @@ impl WatcherService {
     pub fn start(self) -> (WatcherHandle, mpsc::Receiver<WatcherEvent>) {
         let (tx, rx) = mpsc::channel(64);
         let cancel = CancellationToken::new();
-        let handle = WatcherHandle {
-            cancel: cancel.clone(),
-        };
+        let handle = WatcherHandle { cancel: cancel.clone() };
         tokio::spawn(self.run(tx, cancel));
         (handle, rx)
     }
@@ -100,10 +100,7 @@ impl WatcherService {
         }
         *last_notified = Some(ts);
 
-        let thumbnail = sample
-            .jpeg
-            .as_ref()
-            .and_then(|j| thumbnail_jpeg(j, 320).ok());
+        let thumbnail = sample.jpeg.as_ref().and_then(|j| thumbnail_jpeg(j, 320).ok());
         let mut notified = false;
         let mut error = None;
         if let Some(notifier) = &self.notifier {
@@ -127,9 +124,13 @@ impl WatcherService {
                 Err(e) => error = Some(e.to_string()),
             }
         }
-        let id = self
-            .storage
-            .insert_watch_event(&change.reason, &change.detail, thumbnail.as_deref(), notified, error.as_deref())?;
+        let id = self.storage.insert_watch_event(
+            &change.reason,
+            &change.detail,
+            thumbnail.as_deref(),
+            notified,
+            error.as_deref(),
+        )?;
         Ok(Some(WatchEvent {
             id,
             ts,
@@ -173,7 +174,12 @@ mod tests {
     async fn detects_stores_and_notifies_with_cooldown() {
         let screen = Arc::new(FakeScreen::new(
             vec![solid_jpeg(64, 64, [0, 0, 0])],
-            vec!["quiet".into(), "quiet".into(), "New message from Anna".into(), "Another new line here".into()],
+            vec![
+                "quiet".into(),
+                "quiet".into(),
+                "New message from Anna".into(),
+                "Another new line here".into(),
+            ],
         ));
         let notifier = Arc::new(RecordingNotifier::default());
         let storage = Storage::open_in_memory().unwrap();

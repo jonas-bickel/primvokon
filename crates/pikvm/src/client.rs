@@ -236,10 +236,7 @@ impl PikvmClient {
     /// `POST /api/auth/login` and remember the `auth_token` cookie.
     pub async fn login(&self) -> Result<String> {
         let creds = &self.inner.cfg.credentials;
-        let form = [
-            ("user", creds.user.clone()),
-            ("passwd", creds.effective_password()?),
-        ];
+        let form = [("user", creds.user.clone()), ("passwd", creds.effective_password()?)];
         let resp = self
             .inner
             .http
@@ -305,7 +302,11 @@ impl PikvmClient {
             .unwrap_or_default()
             .to_string();
         let body = resp.bytes().await?;
-        Ok(RawResponse { status, content_type, body })
+        Ok(RawResponse {
+            status,
+            content_type,
+            body,
+        })
     }
 
     /// Execute and return the raw response only when the status is 2xx.
@@ -423,9 +424,14 @@ mod tests {
 
     #[test]
     fn normalises_base_url() {
-        assert_eq!(ConnectionConfig::parse_base_url("pikvm.local").unwrap().as_str(), "https://pikvm.local/");
         assert_eq!(
-            ConnectionConfig::parse_base_url("http://10.0.0.5:8080/kvm/").unwrap().as_str(),
+            ConnectionConfig::parse_base_url("pikvm.local").unwrap().as_str(),
+            "https://pikvm.local/"
+        );
+        assert_eq!(
+            ConnectionConfig::parse_base_url("http://10.0.0.5:8080/kvm/")
+                .unwrap()
+                .as_str(),
             "http://10.0.0.5:8080/kvm"
         );
         assert!(ConnectionConfig::parse_base_url("ftp://x").is_err());
@@ -436,17 +442,37 @@ mod tests {
     fn builds_api_and_ws_urls() {
         let c = client("https://pikvm.tail.ts.net/prefix");
         assert_eq!(c.url("/api/info").as_str(), "https://pikvm.tail.ts.net/prefix/api/info");
-        assert_eq!(c.ws_url(false).as_str(), "wss://pikvm.tail.ts.net/prefix/api/ws?stream=0");
-        assert_eq!(c.ws_url(true).as_str(), "wss://pikvm.tail.ts.net/prefix/api/ws?stream=1");
+        assert_eq!(
+            c.ws_url(false).as_str(),
+            "wss://pikvm.tail.ts.net/prefix/api/ws?stream=0"
+        );
+        assert_eq!(
+            c.ws_url(true).as_str(),
+            "wss://pikvm.tail.ts.net/prefix/api/ws?stream=1"
+        );
         let plain = client("http://192.168.1.2");
         assert_eq!(plain.ws_url(true).as_str(), "ws://192.168.1.2/api/ws?stream=1");
-        assert_eq!(plain.stream_url().as_str(), "http://192.168.1.2/streamer/stream?dual_final_frames=1");
+        assert_eq!(
+            plain.stream_url().as_str(),
+            "http://192.168.1.2/streamer/stream?dual_final_frames=1"
+        );
     }
 
     #[test]
     fn query_encodes_flags() {
-        let q = Query::new().push("action", "on").flag("wait", true).opt("x", None::<u8>).opt_flag("y", Some(false));
-        assert_eq!(q.0, vec![("action", "on".to_string()), ("wait", "1".to_string()), ("y", "0".to_string())]);
+        let q = Query::new()
+            .push("action", "on")
+            .flag("wait", true)
+            .opt("x", None::<u8>)
+            .opt_flag("y", Some(false));
+        assert_eq!(
+            q.0,
+            vec![
+                ("action", "on".to_string()),
+                ("wait", "1".to_string()),
+                ("y", "0".to_string())
+            ]
+        );
     }
 
     #[test]
@@ -477,6 +503,9 @@ mod tests {
             }
             other => panic!("unexpected {other:?}"),
         }
-        assert!(matches!(map_status(StatusCode::UNAUTHORIZED, String::new()), PikvmError::Unauthenticated));
+        assert!(matches!(
+            map_status(StatusCode::UNAUTHORIZED, String::new()),
+            PikvmError::Unauthenticated
+        ));
     }
 }

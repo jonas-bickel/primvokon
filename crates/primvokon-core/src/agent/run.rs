@@ -34,8 +34,18 @@ pub struct ApprovalRequest {
 pub enum AgentEvent {
     /// Assistant prose (in auto mode this includes "Next steps" announcements).
     Text(String),
-    ToolCall { id: String, tool: ToolKind, input: Value, summary: String },
-    ToolResult { id: String, tool: ToolKind, output: String, is_error: bool },
+    ToolCall {
+        id: String,
+        tool: ToolKind,
+        input: Value,
+        summary: String,
+    },
+    ToolResult {
+        id: String,
+        tool: ToolKind,
+        output: String,
+        is_error: bool,
+    },
     AwaitingApproval(ApprovalRequest),
     Usage(Usage),
     Finished(String),
@@ -104,9 +114,7 @@ returns an error explaining why. Adapt to rejections instead of retrying the sam
 pub fn start(cfg: AgentConfig) -> (AgentRun, mpsc::Receiver<AgentEvent>) {
     let (tx, rx) = mpsc::channel(64);
     let cancel = CancellationToken::new();
-    let run = AgentRun {
-        cancel: cancel.clone(),
-    };
+    let run = AgentRun { cancel: cancel.clone() };
     tokio::spawn(async move {
         let mut loop_ = AgentLoop {
             cfg,
@@ -144,12 +152,18 @@ impl AgentLoop {
     async fn emit(&self, ev: AgentEvent) {
         let record = match &ev {
             AgentEvent::Text(t) => Some(("assistant", json!({"text": t}))),
-            AgentEvent::ToolCall { tool, input, summary, .. } => {
-                Some(("tool_call", json!({"tool": tool.name(), "input": input, "summary": summary})))
-            }
-            AgentEvent::ToolResult { tool, output, is_error, .. } => {
-                Some(("tool_result", json!({"tool": tool.name(), "output": output, "is_error": is_error})))
-            }
+            AgentEvent::ToolCall {
+                tool, input, summary, ..
+            } => Some((
+                "tool_call",
+                json!({"tool": tool.name(), "input": input, "summary": summary}),
+            )),
+            AgentEvent::ToolResult {
+                tool, output, is_error, ..
+            } => Some((
+                "tool_result",
+                json!({"tool": tool.name(), "output": output, "is_error": is_error}),
+            )),
             AgentEvent::Finished(r) => Some(("finished", json!({"report": r}))),
             AgentEvent::Error(e) => Some(("error", json!({"error": e}))),
             AgentEvent::Stopped => Some(("stopped", json!({}))),

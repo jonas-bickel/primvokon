@@ -95,19 +95,32 @@ impl ToolKind {
     }
 
     pub fn schema(self) -> Value {
-        let obj = |props: Value, required: Vec<&str>| json!({"type": "object", "properties": props, "required": required});
+        let obj =
+            |props: Value, required: Vec<&str>| json!({"type": "object", "properties": props, "required": required});
         match self {
             ToolKind::ReadScreen => obj(json!({}), vec![]),
             ToolKind::TypeText => obj(json!({"text": {"type": "string"}}), vec!["text"]),
-            ToolKind::SendShortcut => obj(json!({"keys": {"type": "array", "items": {"type": "string"}}}), vec!["keys"]),
+            ToolKind::SendShortcut => obj(
+                json!({"keys": {"type": "array", "items": {"type": "string"}}}),
+                vec!["keys"],
+            ),
             ToolKind::SendKey => obj(json!({"key": {"type": "string"}}), vec!["key"]),
             ToolKind::ClickMouse => obj(
                 json!({"x": {"type": "integer"}, "y": {"type": "integer"}, "button": {"type": "string", "enum": ["left", "right", "middle"]}, "double": {"type": "boolean"}}),
                 vec!["x", "y"],
             ),
-            ToolKind::MoveMouse => obj(json!({"x": {"type": "integer"}, "y": {"type": "integer"}}), vec!["x", "y"]),
-            ToolKind::Scroll => obj(json!({"delta_y": {"type": "integer"}, "delta_x": {"type": "integer"}}), vec!["delta_y"]),
-            ToolKind::AtxPower => obj(json!({"action": {"type": "string", "enum": ["on", "off", "off_hard", "reset_hard"]}}), vec!["action"]),
+            ToolKind::MoveMouse => obj(
+                json!({"x": {"type": "integer"}, "y": {"type": "integer"}}),
+                vec!["x", "y"],
+            ),
+            ToolKind::Scroll => obj(
+                json!({"delta_y": {"type": "integer"}, "delta_x": {"type": "integer"}}),
+                vec!["delta_y"],
+            ),
+            ToolKind::AtxPower => obj(
+                json!({"action": {"type": "string", "enum": ["on", "off", "off_hard", "reset_hard"]}}),
+                vec!["action"],
+            ),
             ToolKind::Wait => obj(json!({"seconds": {"type": "number"}}), vec!["seconds"]),
             ToolKind::Finish => obj(json!({"report": {"type": "string"}}), vec!["report"]),
         }
@@ -217,7 +230,11 @@ impl ToolExecutor {
                     Some("middle") => MouseButton::Middle,
                     _ => MouseButton::Left,
                 };
-                let clicks = if input["double"].as_bool().unwrap_or(false) { 2 } else { 1 };
+                let clicks = if input["double"].as_bool().unwrap_or(false) {
+                    2
+                } else {
+                    1
+                };
                 for _ in 0..clicks {
                     self.client.hid().send_mouse_button(button, Some(true)).await?;
                     tokio::time::sleep(Duration::from_millis(60)).await;

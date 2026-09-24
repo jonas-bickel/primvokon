@@ -21,7 +21,9 @@ pub struct AnthropicProvider {
 impl AnthropicProvider {
     pub fn new(cfg: &ProviderConfig, api_key: String) -> anyhow::Result<Self> {
         Ok(Self {
-            http: reqwest::Client::builder().timeout(std::time::Duration::from_secs(600)).build()?,
+            http: reqwest::Client::builder()
+                .timeout(std::time::Duration::from_secs(600))
+                .build()?,
             base_url: cfg.base_url.trim_end_matches('/').to_string(),
             model: cfg.model.clone(),
             api_key,
@@ -108,7 +110,9 @@ fn message_to_json(m: &super::ChatMessage) -> Value {
                 "type": "image",
                 "source": {"type": "base64", "media_type": media_type, "data": b64(data)}
             }),
-            ContentPart::ToolUse { id, name, input } => json!({"type": "tool_use", "id": id, "name": name, "input": input}),
+            ContentPart::ToolUse { id, name, input } => {
+                json!({"type": "tool_use", "id": id, "name": name, "input": input})
+            }
             ContentPart::ToolResult {
                 tool_use_id,
                 content,
@@ -214,6 +218,9 @@ mod tests {
         assert_eq!(r.tool_uses().count(), 1);
         assert_eq!(r.usage.total(), 19);
         let refusal = json!({"stop_reason": "refusal", "content": [], "usage": {}});
-        assert_eq!(AnthropicProvider::parse_response(&refusal).unwrap().stop_reason, StopReason::Refusal);
+        assert_eq!(
+            AnthropicProvider::parse_response(&refusal).unwrap().stop_reason,
+            StopReason::Refusal
+        );
     }
 }

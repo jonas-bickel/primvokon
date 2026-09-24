@@ -138,7 +138,10 @@ mod tests {
         };
         let n = NtfyNotifier::new(s, None, None).unwrap();
         assert_eq!(n.topic_url(), "https://ntfy.truenas.lan/alerts");
-        assert_eq!(NtfyNotifier::render_title("{host}: {reason}", "Teams", "pikvm"), "pikvm: Teams");
+        assert_eq!(
+            NtfyNotifier::render_title("{host}: {reason}", "Teams", "pikvm"),
+            "pikvm: Teams"
+        );
     }
 
     #[test]

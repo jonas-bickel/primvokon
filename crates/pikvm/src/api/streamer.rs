@@ -25,7 +25,10 @@ impl StreamerApi<'_> {
             .opt("preview_max_width", opts.preview_max_width)
             .opt("preview_max_height", opts.preview_max_height)
             .opt("preview_quality", opts.preview_quality);
-        let resp = self.0.call_ok(Method::GET, "/api/streamer/snapshot", &q, Body::Empty).await?;
+        let resp = self
+            .0
+            .call_ok(Method::GET, "/api/streamer/snapshot", &q, Body::Empty)
+            .await?;
         Ok(resp.body)
     }
 
@@ -42,13 +45,19 @@ impl StreamerApi<'_> {
                 .push("ocr_right", r.right)
                 .push("ocr_bottom", r.bottom);
         }
-        let resp = self.0.call_ok(Method::GET, "/api/streamer/snapshot", &q, Body::Empty).await?;
+        let resp = self
+            .0
+            .call_ok(Method::GET, "/api/streamer/snapshot", &q, Body::Empty)
+            .await?;
         Ok(resp.text())
     }
 
     /// `DELETE /api/streamer/snapshot`
     pub async fn delete_snapshot(&self) -> Result<()> {
-        let resp = self.0.call(Method::DELETE, "/api/streamer/snapshot", &Query::new(), Body::Empty).await?;
+        let resp = self
+            .0
+            .call(Method::DELETE, "/api/streamer/snapshot", &Query::new(), Body::Empty)
+            .await?;
         let _: serde_json::Value = crate::client::decode_envelope(resp)?;
         Ok(())
     }

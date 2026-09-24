@@ -52,9 +52,7 @@ impl CaptureService {
     pub fn start(self) -> (CaptureHandle, mpsc::Receiver<RecallEvent>) {
         let (tx, rx) = mpsc::channel(64);
         let cancel = CancellationToken::new();
-        let handle = CaptureHandle {
-            cancel: cancel.clone(),
-        };
+        let handle = CaptureHandle { cancel: cancel.clone() };
         tokio::spawn(self.run(tx, cancel));
         (handle, rx)
     }
@@ -111,9 +109,15 @@ mod tests {
             storage: Storage::open_in_memory().unwrap(),
             interval: Duration::from_secs(60),
         };
-        assert!(matches!(svc.capture_once().await.unwrap(), RecallEvent::Captured { .. }));
+        assert!(matches!(
+            svc.capture_once().await.unwrap(),
+            RecallEvent::Captured { .. }
+        ));
         assert!(matches!(svc.capture_once().await.unwrap(), RecallEvent::Duplicate));
-        assert!(matches!(svc.capture_once().await.unwrap(), RecallEvent::Captured { .. }));
+        assert!(matches!(
+            svc.capture_once().await.unwrap(),
+            RecallEvent::Captured { .. }
+        ));
         assert_eq!(text_hash("A  b"), text_hash("a b"));
     }
 }

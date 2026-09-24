@@ -152,8 +152,7 @@ pub fn web_name_for_gtk_keycode(keycode: u32) -> Option<&'static str> {
 pub fn is_modifier(web_name: &str) -> bool {
     matches!(
         web_name,
-        "ShiftLeft" | "ShiftRight" | "ControlLeft" | "ControlRight" | "AltLeft" | "AltRight"
-            | "MetaLeft" | "MetaRight"
+        "ShiftLeft" | "ShiftRight" | "ControlLeft" | "ControlRight" | "AltLeft" | "AltRight" | "MetaLeft" | "MetaRight"
     )
 }
 

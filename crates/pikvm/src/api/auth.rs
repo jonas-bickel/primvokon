@@ -16,13 +16,18 @@ impl AuthApi<'_> {
 
     /// `GET /api/auth/check` – `Ok(())` when the current credentials are accepted.
     pub async fn check(&self) -> Result<()> {
-        self.0.call_ok(Method::GET, "/api/auth/check", &Query::new(), Body::Empty).await?;
+        self.0
+            .call_ok(Method::GET, "/api/auth/check", &Query::new(), Body::Empty)
+            .await?;
         Ok(())
     }
 
     /// `POST /api/auth/logout` – invalidate the session token.
     pub async fn logout(&self) -> Result<()> {
-        let _: Value = self.0.post_result("/api/auth/logout", Query::new(), Body::Empty).await?;
+        let _: Value = self
+            .0
+            .post_result("/api/auth/logout", Query::new(), Body::Empty)
+            .await?;
         self.0.clear_token().await;
         Ok(())
     }

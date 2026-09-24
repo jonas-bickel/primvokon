@@ -2,7 +2,6 @@
 
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::Arc;
 
 use gtk::glib;
 use gtk::glib::subclass::prelude::*;
@@ -78,7 +77,7 @@ pub struct AppState {
     pub settings: RefCell<Settings>,
     pub secrets: RefCell<Option<SharedSecrets>>,
     pub storage: Storage,
-    pub connection: Arc<Connection>,
+    pub connection: Rc<Connection>,
     pub bus: Bus,
     pub services: RefCell<Services>,
 }
@@ -97,7 +96,7 @@ pub fn init(storage: Storage) -> Rc<AppState> {
         settings: RefCell::new(Settings::load()),
         secrets: RefCell::new(None),
         storage,
-        connection: Arc::new(Connection::default()),
+        connection: Rc::new(Connection::default()),
         bus: Bus::default(),
         services: RefCell::new(Services::default()),
     });
@@ -126,12 +125,12 @@ impl AppState {
         self.secrets.borrow().clone()
     }
 
-    pub fn require_secrets(&self) -> anyhow::Result<SharedSecrets> {
-        self.secrets().ok_or_else(|| anyhow::anyhow!("secret store not ready yet"))
-    }
-
     /// Build the configured provider of a kind (API key from the secret store).
-    pub async fn provider(kind: ProviderKind, settings: &Settings, secrets: &SharedSecrets) -> anyhow::Result<SharedProvider> {
+    pub async fn provider(
+        kind: ProviderKind,
+        settings: &Settings,
+        secrets: &SharedSecrets,
+    ) -> anyhow::Result<SharedProvider> {
         let key = secrets.get(&kind.secret_key()).await?.unwrap_or_default();
         build_provider(kind, &settings.ai.provider(kind), key)
     }
@@ -141,16 +140,26 @@ impl AppState {
         if settings.capabilities.never_send_screen_to_ai || !settings.capabilities.ai_vision {
             return None;
         }
-        Self::provider(settings.ai.vision_provider, settings, secrets).await.ok()
+        Self::provider(settings.ai.vision_provider, settings, secrets)
+            .await
+            .ok()
     }
 
     pub async fn ntfy_notifier(settings: &Settings, secrets: &SharedSecrets) -> anyhow::Result<NtfyNotifier> {
         let token = match settings.ntfy.auth {
-            NtfyAuth::Token => secrets.get(primvokon_core::settings::NtfySettings::SECRET_KEY_TOKEN).await?,
+            NtfyAuth::Token => {
+                secrets
+                    .get(primvokon_core::settings::NtfySettings::SECRET_KEY_TOKEN)
+                    .await?
+            }
             _ => None,
         };
         let password = match settings.ntfy.auth {
-            NtfyAuth::Basic => secrets.get(primvokon_core::settings::NtfySettings::SECRET_KEY_PASSWORD).await?,
+            NtfyAuth::Basic => {
+                secrets
+                    .get(primvokon_core::settings::NtfySettings::SECRET_KEY_PASSWORD)
+                    .await?
+            }
             _ => None,
         };
         NtfyNotifier::new(settings.ntfy.clone(), token, password)

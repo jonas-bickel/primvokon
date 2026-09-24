@@ -62,7 +62,11 @@ impl Summariser {
             let prompt = if chunks.len() == 1 {
                 format!("Date: {day}\n\nCaptures:\n\n{chunk}")
             } else {
-                format!("Date: {day} (part {} of {})\n\nCaptures:\n\n{chunk}", i + 1, chunks.len())
+                format!(
+                    "Date: {day} (part {} of {})\n\nCaptures:\n\n{chunk}",
+                    i + 1,
+                    chunks.len()
+                )
             };
             partials.push(self.provider.complete(&system, &prompt).await?);
         }
@@ -71,7 +75,10 @@ impl Summariser {
         } else {
             let merged = partials.join("\n\n---\n\n");
             self.provider
-                .complete(&system, &format!("Merge these partial summaries of {day} into one daily summary:\n\n{merged}"))
+                .complete(
+                    &system,
+                    &format!("Merge these partial summaries of {day} into one daily summary:\n\n{merged}"),
+                )
                 .await?
         };
         self.storage

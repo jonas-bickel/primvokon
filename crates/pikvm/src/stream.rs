@@ -27,12 +27,12 @@ impl MultipartParser {
         let mut frames = Vec::new();
         while let Some(header_end) = find(&self.buf, b"\r\n\r\n") {
             let header = String::from_utf8_lossy(&self.buf[..header_end]).to_string();
-            let content_length = header
-                .lines()
-                .find_map(|l| {
-                    let (k, v) = l.split_once(':')?;
-                    k.trim().eq_ignore_ascii_case("content-length").then(|| v.trim().parse::<usize>().ok())?
-                });
+            let content_length = header.lines().find_map(|l| {
+                let (k, v) = l.split_once(':')?;
+                k.trim()
+                    .eq_ignore_ascii_case("content-length")
+                    .then(|| v.trim().parse::<usize>().ok())?
+            });
             let body_start = header_end + 4;
             match content_length {
                 Some(len) => {
@@ -45,7 +45,9 @@ impl MultipartParser {
                 }
                 None => {
                     // No length: search for the next boundary marker after the header.
-                    let Some(rel) = find(&self.buf[body_start..], b"\r\n--") else { break };
+                    let Some(rel) = find(&self.buf[body_start..], b"\r\n--") else {
+                        break;
+                    };
                     let frame = self.buf.split_to(body_start + rel).split_off(body_start).freeze();
                     if !frame.is_empty() {
                         frames.push(frame);
@@ -124,7 +126,8 @@ mod tests {
     #[test]
     fn parses_frames_with_content_length_across_chunks() {
         let mut p = MultipartParser::new();
-        let part = b"--boundarydonotcross\r\nX-Timestamp: 1\r\nContent-Type: image/jpeg\r\nContent-Length: 5\r\n\r\nHELLO\r\n";
+        let part =
+            b"--boundarydonotcross\r\nX-Timestamp: 1\r\nContent-Type: image/jpeg\r\nContent-Length: 5\r\n\r\nHELLO\r\n";
         let mut data = Vec::new();
         data.extend_from_slice(part);
         data.extend_from_slice(part);
@@ -139,7 +142,8 @@ mod tests {
     #[test]
     fn parses_frames_without_content_length() {
         let mut p = MultipartParser::new();
-        let data = b"--b\r\nContent-Type: image/jpeg\r\n\r\nJPEG1\r\n--b\r\nContent-Type: image/jpeg\r\n\r\nJPEG2\r\n--b\r\n";
+        let data =
+            b"--b\r\nContent-Type: image/jpeg\r\n\r\nJPEG1\r\n--b\r\nContent-Type: image/jpeg\r\n\r\nJPEG2\r\n--b\r\n";
         let frames = p.push(data);
         assert_eq!(frames.len(), 2);
         assert_eq!(&frames[1][..], b"JPEG2");

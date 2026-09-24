@@ -159,8 +159,10 @@ impl Storage {
 
     pub fn last_capture_hash(&self) -> anyhow::Result<Option<String>> {
         self.with(|c| {
-            c.query_row("SELECT hash FROM recall_captures ORDER BY id DESC LIMIT 1", [], |r| r.get(0))
-                .optional()
+            c.query_row("SELECT hash FROM recall_captures ORDER BY id DESC LIMIT 1", [], |r| {
+                r.get(0)
+            })
+            .optional()
         })
     }
 
@@ -177,7 +179,8 @@ impl Storage {
 
     pub fn captures_for_day(&self, day: &str) -> anyhow::Result<Vec<Capture>> {
         self.with(|c| {
-            let mut stmt = c.prepare("SELECT id, ts, day, text, hash, source FROM recall_captures WHERE day = ?1 ORDER BY ts")?;
+            let mut stmt =
+                c.prepare("SELECT id, ts, day, text, hash, source FROM recall_captures WHERE day = ?1 ORDER BY ts")?;
             let rows = stmt.query_map([day], |r| {
                 Ok(Capture {
                     id: r.get(0)?,
@@ -336,7 +339,8 @@ impl Storage {
 
     pub fn agent_sessions(&self, limit: u32) -> anyhow::Result<Vec<AgentSession>> {
         self.with(|c| {
-            let mut stmt = c.prepare("SELECT id, created_ts, title, mode FROM agent_sessions ORDER BY created_ts DESC LIMIT ?1")?;
+            let mut stmt =
+                c.prepare("SELECT id, created_ts, title, mode FROM agent_sessions ORDER BY created_ts DESC LIMIT ?1")?;
             let rows = stmt.query_map([limit], |r| {
                 Ok(AgentSession {
                     id: r.get(0)?,
@@ -361,7 +365,9 @@ impl Storage {
 
     pub fn agent_messages(&self, session_id: &str) -> anyhow::Result<Vec<AgentMessage>> {
         self.with(|c| {
-            let mut stmt = c.prepare("SELECT id, session_id, ts, kind, content FROM agent_messages WHERE session_id = ?1 ORDER BY id")?;
+            let mut stmt = c.prepare(
+                "SELECT id, session_id, ts, kind, content FROM agent_messages WHERE session_id = ?1 ORDER BY id",
+            )?;
             let rows = stmt.query_map([session_id], |r| {
                 Ok(AgentMessage {
                     id: r.get(0)?,
@@ -392,7 +398,10 @@ mod tests {
         s.insert_capture(day1, "hello", "h1", "ocr").unwrap();
         s.insert_capture(day2, "world", "h2", "ocr").unwrap();
         assert_eq!(s.last_capture_hash().unwrap().as_deref(), Some("h2"));
-        assert_eq!(s.days_pending_summary("2026-09-24").unwrap(), vec!["2026-09-22", "2026-09-23"]);
+        assert_eq!(
+            s.days_pending_summary("2026-09-24").unwrap(),
+            vec!["2026-09-22", "2026-09-23"]
+        );
         s.upsert_summary("2026-09-22", "sum", "m", 1).unwrap();
         assert_eq!(s.days_pending_summary("2026-09-24").unwrap(), vec!["2026-09-23"]);
         let days = s.days().unwrap();
@@ -408,7 +417,8 @@ mod tests {
     #[test]
     fn watch_events_and_agent_transcripts() {
         let s = Storage::open_in_memory().unwrap();
-        s.insert_watch_event("ocr", "new text", Some(&[1, 2]), true, None).unwrap();
+        s.insert_watch_event("ocr", "new text", Some(&[1, 2]), true, None)
+            .unwrap();
         let ev = s.watch_events(10).unwrap();
         assert_eq!(ev.len(), 1);
         assert!(ev[0].notified);

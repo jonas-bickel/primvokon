@@ -17,7 +17,9 @@ pub struct OpenAiCompatProvider {
 impl OpenAiCompatProvider {
     pub fn new(kind: ProviderKind, cfg: &ProviderConfig, api_key: String) -> anyhow::Result<Self> {
         Ok(Self {
-            http: reqwest::Client::builder().timeout(std::time::Duration::from_secs(600)).build()?,
+            http: reqwest::Client::builder()
+                .timeout(std::time::Duration::from_secs(600))
+                .build()?,
             kind,
             base_url: cfg.base_url.trim_end_matches('/').to_string(),
             model: cfg.model.clone(),
@@ -144,7 +146,8 @@ fn message_to_json(m: &ChatMessage) -> Vec<Value> {
                     _ => None,
                 })
                 .collect();
-            let mut msg = json!({"role": "assistant", "content": if text.is_empty() { Value::Null } else { json!(text) }});
+            let mut msg =
+                json!({"role": "assistant", "content": if text.is_empty() { Value::Null } else { json!(text) }});
             if !tool_calls.is_empty() {
                 msg["tool_calls"] = json!(tool_calls);
             }
@@ -172,7 +175,12 @@ impl LlmProvider for OpenAiCompatProvider {
         let text = resp.text().await?;
         let v: Value = serde_json::from_str(&text).unwrap_or_else(|_| json!({"error": {"message": text}}));
         if !status.is_success() {
-            anyhow::bail!("{} HTTP {}: {}", self.kind.label(), status, v["error"]["message"].as_str().unwrap_or(&text));
+            anyhow::bail!(
+                "{} HTTP {}: {}",
+                self.kind.label(),
+                status,
+                v["error"]["message"].as_str().unwrap_or(&text)
+            );
         }
         Self::parse_response(&v)
     }

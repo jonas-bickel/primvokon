@@ -37,7 +37,9 @@ impl MsdApi<'_> {
             .map(str::to_string)
             .or_else(|| path.file_name().map(|n| n.to_string_lossy().into_owned()))
             .ok_or_else(|| PikvmError::Decode("image name required".into()))?;
-        let file = tokio::fs::File::open(path).await.map_err(|e| PikvmError::Stream(e.to_string()))?;
+        let file = tokio::fs::File::open(path)
+            .await
+            .map_err(|e| PikvmError::Stream(e.to_string()))?;
         let total = file.metadata().await.map(|m| m.len()).unwrap_or(0);
         let sent = Arc::new(AtomicU64::new(0));
         let sent_clone = sent.clone();
@@ -90,7 +92,9 @@ impl MsdApi<'_> {
             .opt("image", image_name)
             .opt("timeout", timeout_secs);
         let mut api_url = self.0.url("/api/msd/write_remote");
-        api_url.query_pairs_mut().extend_pairs(q.0.iter().map(|(k, v)| (*k, v.as_str())));
+        api_url
+            .query_pairs_mut()
+            .extend_pairs(q.0.iter().map(|(k, v)| (*k, v.as_str())));
         let mut rb = self.0.stream_request(api_url).await?;
         rb = rb.header(reqwest::header::CONTENT_LENGTH, 0);
         let req = {
@@ -113,18 +117,25 @@ impl MsdApi<'_> {
 
     /// `POST /api/msd/set_params?image=&cdrom=&rw=`
     pub async fn set_params(&self, image: Option<&str>, cdrom: Option<bool>, rw: Option<bool>) -> Result<()> {
-        let q = Query::new().opt("image", image).opt_flag("cdrom", cdrom).opt_flag("rw", rw);
+        let q = Query::new()
+            .opt("image", image)
+            .opt_flag("cdrom", cdrom)
+            .opt_flag("rw", rw);
         self.0.post_ok("/api/msd/set_params", q).await
     }
 
     /// `POST /api/msd/set_connected?connected=`
     pub async fn set_connected(&self, connected: bool) -> Result<()> {
-        self.0.post_ok("/api/msd/set_connected", Query::new().flag("connected", connected)).await
+        self.0
+            .post_ok("/api/msd/set_connected", Query::new().flag("connected", connected))
+            .await
     }
 
     /// `POST /api/msd/remove?image=`
     pub async fn remove(&self, image: &str) -> Result<()> {
-        self.0.post_ok("/api/msd/remove", Query::new().push("image", image)).await
+        self.0
+            .post_ok("/api/msd/remove", Query::new().push("image", image))
+            .await
     }
 
     /// `POST /api/msd/reset`

@@ -234,9 +234,16 @@ mod tests {
 
     #[test]
     fn out_events_serialize_like_kvmd_expects() {
-        let key = serde_json::to_string(&OutEvent::Key { key: "Enter".into(), state: true }).unwrap();
+        let key = serde_json::to_string(&OutEvent::Key {
+            key: "Enter".into(),
+            state: true,
+        })
+        .unwrap();
         assert_eq!(key, r#"{"event_type":"key","event":{"key":"Enter","state":true}}"#);
-        let mv = serde_json::to_string(&OutEvent::MouseMove { to: MousePoint { x: 0, y: 50 } }).unwrap();
+        let mv = serde_json::to_string(&OutEvent::MouseMove {
+            to: MousePoint { x: 0, y: 50 },
+        })
+        .unwrap();
         assert_eq!(mv, r#"{"event_type":"mouse_move","event":{"to":{"x":0,"y":50}}}"#);
         let ping = serde_json::to_string(&OutEvent::Ping {}).unwrap();
         assert_eq!(ping, r#"{"event_type":"ping","event":{}}"#);
@@ -244,8 +251,14 @@ mod tests {
 
     #[test]
     fn mouse_point_scales_to_absolute_space() {
-        assert_eq!(MousePoint::from_frame(0.0, 0.0, 100.0, 100.0), MousePoint { x: -32768, y: -32768 });
-        assert_eq!(MousePoint::from_frame(100.0, 100.0, 100.0, 100.0), MousePoint { x: 32767, y: 32767 });
+        assert_eq!(
+            MousePoint::from_frame(0.0, 0.0, 100.0, 100.0),
+            MousePoint { x: -32768, y: -32768 }
+        );
+        assert_eq!(
+            MousePoint::from_frame(100.0, 100.0, 100.0, 100.0),
+            MousePoint { x: 32767, y: 32767 }
+        );
         let mid = MousePoint::from_frame(50.0, 50.0, 100.0, 100.0);
         assert!(mid.x.abs() <= 1 && mid.y.abs() <= 1);
     }

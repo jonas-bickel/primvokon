@@ -28,10 +28,23 @@ pub enum Role {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ContentPart {
-    Text { text: String },
-    Image { media_type: String, data: Bytes },
-    ToolUse { id: String, name: String, input: Value },
-    ToolResult { tool_use_id: String, content: String, is_error: bool },
+    Text {
+        text: String,
+    },
+    Image {
+        media_type: String,
+        data: Bytes,
+    },
+    ToolUse {
+        id: String,
+        name: String,
+        input: Value,
+    },
+    ToolResult {
+        tool_use_id: String,
+        content: String,
+        is_error: bool,
+    },
 }
 
 impl ContentPart {
@@ -170,8 +183,10 @@ pub trait LlmProvider: Send + Sync {
     async fn describe_image(&self, jpeg: &Bytes, prompt: &str) -> anyhow::Result<String> {
         let mut req = ChatRequest::new("You describe screenshots precisely and completely.");
         req.max_tokens = 4_000;
-        req.messages
-            .push(ChatMessage::user(vec![ContentPart::jpeg(jpeg.clone()), ContentPart::text(prompt)]));
+        req.messages.push(ChatMessage::user(vec![
+            ContentPart::jpeg(jpeg.clone()),
+            ContentPart::text(prompt),
+        ]));
         let resp = self.chat(&req).await?;
         ensure_not_refused(&resp)?;
         Ok(resp.text())
@@ -214,7 +229,9 @@ pub fn build_provider(kind: ProviderKind, cfg: &ProviderConfig, api_key: String)
     }
     let provider: SharedProvider = match kind {
         ProviderKind::Anthropic => Arc::new(anthropic::AnthropicProvider::new(cfg, api_key)?),
-        ProviderKind::OpenAi | ProviderKind::OpenRouter => Arc::new(openai::OpenAiCompatProvider::new(kind, cfg, api_key)?),
+        ProviderKind::OpenAi | ProviderKind::OpenRouter => {
+            Arc::new(openai::OpenAiCompatProvider::new(kind, cfg, api_key)?)
+        }
     };
     Ok(provider)
 }

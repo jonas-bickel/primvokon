@@ -38,7 +38,9 @@ impl HidApi<'_> {
 
     /// `POST /api/hid/set_connected`
     pub async fn set_connected(&self, connected: bool) -> Result<()> {
-        self.0.post_ok("/api/hid/set_connected", Query::new().flag("connected", connected)).await
+        self.0
+            .post_ok("/api/hid/set_connected", Query::new().flag("connected", connected))
+            .await
     }
 
     /// `POST /api/hid/reset`
@@ -58,20 +60,29 @@ impl HidApi<'_> {
             .opt("limit", opts.limit)
             .flag("slow", opts.slow)
             .opt("delay", opts.delay);
-        let _: serde_json::Value = self.0.post_result("/api/hid/print", q, Body::Text(text.to_string())).await?;
+        let _: serde_json::Value = self
+            .0
+            .post_result("/api/hid/print", q, Body::Text(text.to_string()))
+            .await?;
         Ok(())
     }
 
     /// `POST /api/hid/events/send_shortcut` – `keys` are web names, e.g. `["ControlLeft", "AltLeft", "Delete"]`.
     pub async fn send_shortcut(&self, keys: &[&str]) -> Result<()> {
         self.0
-            .post_ok("/api/hid/events/send_shortcut", Query::new().push("keys", keys.join(",")))
+            .post_ok(
+                "/api/hid/events/send_shortcut",
+                Query::new().push("keys", keys.join(",")),
+            )
             .await
     }
 
     /// `POST /api/hid/events/send_key`
     pub async fn send_key(&self, key: &str, state: Option<bool>, finish: bool) -> Result<()> {
-        let q = Query::new().push("key", key).opt_flag("state", state).flag("finish", finish);
+        let q = Query::new()
+            .push("key", key)
+            .opt_flag("state", state)
+            .flag("finish", finish);
         self.0.post_ok("/api/hid/events/send_key", q).await
     }
 

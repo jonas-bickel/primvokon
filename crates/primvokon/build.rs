@@ -67,7 +67,14 @@ fn main() {
     xml.push_str(&format!("  <gresource prefix=\"{RESOURCE_PREFIX}\">\n"));
     for f in &blp_files {
         let name = f.file_stem().unwrap().to_string_lossy();
-        xml.push_str(&format!("    <file compressed=\"true\" preprocess=\"xml-stripblanks\">ui/{name}.ui</file>\n"));
+        if name == "help-overlay" {
+            // GTK looks up the shortcuts window at <base-path>/gtk/help-overlay.ui.
+            xml.push_str("    <file compressed=\"true\" preprocess=\"xml-stripblanks\" alias=\"gtk/help-overlay.ui\">ui/help-overlay.ui</file>\n");
+        } else {
+            xml.push_str(&format!(
+                "    <file compressed=\"true\" preprocess=\"xml-stripblanks\">ui/{name}.ui</file>\n"
+            ));
+        }
     }
     xml.push_str("    <file compressed=\"true\">style.css</file>\n");
     for entry in std::fs::read_dir(data_dir.join("icons")).expect("data/icons") {

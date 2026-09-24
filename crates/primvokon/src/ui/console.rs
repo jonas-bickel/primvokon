@@ -125,7 +125,8 @@ impl ConsolePage {
         let this = self.clone();
         st.connection.store.connect_changed(move |_, _| this.refresh_pills());
         let this = self.clone();
-        st.bus.connect_signal("settings-changed", move || this.update_advanced_visibility());
+        st.bus
+            .connect_signal("settings-changed", move || this.update_advanced_visibility());
 
         self.setup_actions();
         self.setup_input();
@@ -144,15 +145,19 @@ impl ConsolePage {
     fn setup_actions(&self) {
         let imp = self.imp();
         let this = self.clone();
-        imp.power_button.connect_clicked(move |_| this.atx_click(AtxButton::Power));
+        imp.power_button
+            .connect_clicked(move |_| this.atx_click(AtxButton::Power));
         let this = self.clone();
-        imp.reset_button.connect_clicked(move |_| this.atx_click(AtxButton::Reset));
+        imp.reset_button
+            .connect_clicked(move |_| this.atx_click(AtxButton::Reset));
         let this = self.clone();
-        imp.cad_button.connect_clicked(move |_| this.send_shortcut(&["ControlLeft", "AltLeft", "Delete"]));
+        imp.cad_button
+            .connect_clicked(move |_| this.send_shortcut(&["ControlLeft", "AltLeft", "Delete"]));
         let this = self.clone();
         imp.paste_button.connect_clicked(move |_| this.show_paste_dialog());
         let this = self.clone();
-        imp.apply_stream_button.connect_clicked(move |_| this.apply_stream_params());
+        imp.apply_stream_button
+            .connect_clicked(move |_| this.apply_stream_params());
         imp.capture_toggle.connect_toggled(|t| {
             state().update_settings(|s| s.ui.capture_input = t.is_active());
         });
@@ -164,9 +169,11 @@ impl ConsolePage {
             return;
         };
         let run = move || {
-            spawn_result("ATX", async move { Ok(client.atx().click(button, false).await?) }, |_| {
-                toast("ATX button sent")
-            });
+            spawn_result(
+                "ATX",
+                async move { Ok(client.atx().click(button, false).await?) },
+                |_| toast("ATX button sent"),
+            );
         };
         if button.is_destructive() {
             confirm(
@@ -199,65 +206,7 @@ impl ConsolePage {
 
     /// Dialog to type text on the host (`POST /api/hid/print`).
     pub fn show_paste_dialog(&self) {
-        let Some(client) = self.client() else {
-            toast("Not connected");
-            return;
-        };
-        let st = state();
-        let keymaps = st.connection.store.with_state(|s| s.keymaps.clone());
-        let dialog = adw::Dialog::builder().title("Type text on the host").content_width(520).build();
-        let toolbar = adw::ToolbarView::new();
-        toolbar.add_top_bar(&adw::HeaderBar::new());
-        let content = gtk::Box::new(gtk::Orientation::Vertical, 12);
-        content.set_margin_top(12);
-        content.set_margin_bottom(12);
-        content.set_margin_start(12);
-        content.set_margin_end(12);
-        let text_view = gtk::TextView::builder().wrap_mode(gtk::WrapMode::WordChar).build();
-        if let Some(clip) = self.clipboard().read_text_future().now_or_never_text() {
-            text_view.buffer().set_text(&clip);
-        }
-        let scrolled = gtk::ScrolledWindow::builder().child(&text_view).min_content_height(160).build();
-        scrolled.add_css_class("card");
-        content.append(&scrolled);
-        let group = adw::PreferencesGroup::new();
-        let names: Vec<String> = keymaps.as_ref().map(|k| k.available.clone()).unwrap_or_default();
-        let default_idx = keymaps
-            .as_ref()
-            .and_then(|k| names.iter().position(|n| *n == k.default))
-            .unwrap_or(0) as u32;
-        let name_refs: Vec<&str> = names.iter().map(String::as_str).collect();
-        let keymap_row = util::combo_row(&group, "Keymap", Some("Layout of the host keyboard"), &name_refs, default_idx);
-        keymap_row.set_visible(!names.is_empty());
-        let slow_row = util::switch_row(&group, "Slow typing", Some("Larger pauses between keys"), false);
-        content.append(&group);
-        let send = util::suggested_button("Type");
-        send.set_halign(gtk::Align::End);
-        content.append(&send);
-        toolbar.set_content(Some(&content));
-        dialog.set_child(Some(&toolbar));
-        let dialog_ref = dialog.clone();
-        send.connect_clicked(move |_| {
-            let buffer = text_view.buffer();
-            let text = buffer.text(&buffer.start_iter(), &buffer.end_iter(), true).to_string();
-            if text.is_empty() {
-                return;
-            }
-            let keymap = names.get(keymap_row.selected() as usize).cloned();
-            let opts = PrintOptions {
-                keymap,
-                limit: Some(0),
-                slow: slow_row.is_active(),
-                delay: None,
-            };
-            let client = client.clone();
-            let dialog = dialog_ref.clone();
-            spawn_result("Type text", async move { Ok(client.hid().print(&text, &opts).await?) }, move |_| {
-                toast("Text typed");
-                dialog.close();
-            });
-        });
-        dialog.present(Some(self));
+        show_paste_dialog(self);
     }
 
     fn apply_stream_params(&self) {
@@ -269,9 +218,11 @@ impl ConsolePage {
             h264_bitrate: Some(imp.bitrate_row.value() as u32),
             h264_gop: Some(imp.gop_row.value() as u32),
         };
-        spawn_result("Stream parameters", async move { Ok(client.streamer().set_params(&update).await?) }, |_| {
-            toast("Stream parameters applied")
-        });
+        spawn_result(
+            "Stream parameters",
+            async move { Ok(client.streamer().set_params(&update).await?) },
+            |_| toast("Stream parameters applied"),
+        );
     }
 
     // ----- connection / video ----------------------------------------------------------
@@ -280,6 +231,7 @@ impl ConsolePage {
         let imp = self.imp();
         let has_profile = state().settings.borrow().active_profile().is_some();
         if connected {
+            imp.video.add_css_class("pv-video");
             imp.placeholder.set_visible(false);
             imp.banner.set_visible(false);
             if imp.stream_cancel.borrow().is_none() {
@@ -287,17 +239,21 @@ impl ConsolePage {
             }
         } else {
             self.stop_stream();
+            imp.video.remove_css_class("pv-video");
+            imp.video.set_paintable(None::<&gdk::Paintable>);
             if has_profile {
                 imp.placeholder.set_title("Not connected");
                 imp.placeholder.set_description(Some(status));
                 imp.placeholder.set_icon_name(Some("network-offline-symbolic"));
             } else {
                 imp.placeholder.set_title("No PiKVM configured");
-                imp.placeholder.set_description(Some("Add a connection profile to see the host screen."));
+                imp.placeholder
+                    .set_description(Some("Add a connection profile to see the host screen."));
                 imp.placeholder.set_icon_name(Some("network-server-symbolic"));
             }
             imp.placeholder.set_visible(true);
-            imp.banner.set_visible(status.starts_with("Reconnecting") || status.starts_with("Connecting"));
+            imp.banner
+                .set_visible(status.starts_with("Reconnecting") || status.starts_with("Connecting"));
             imp.banner.set_text(status);
         }
         self.refresh_pills();
@@ -354,7 +310,8 @@ impl ConsolePage {
                     Err(e) => {
                         tracing::warn!("mjpeg unavailable ({e}); falling back to snapshots");
                         let _ = status_tx.send("snapshot".into()).await;
-                        let mut snaps = std::pin::pin!(pikvm::stream::snapshot_stream(client.clone(), Duration::from_secs(1)));
+                        let mut snaps =
+                            std::pin::pin!(pikvm::stream::snapshot_stream(client.clone(), Duration::from_secs(1)));
                         let mut failures = 0;
                         loop {
                             let next = tokio::select! {
@@ -620,7 +577,16 @@ impl ConsolePage {
         let focus = gtk::EventControllerFocus::new();
         let this = self.clone();
         focus.connect_leave(move |_| {
-            for key in ["ControlLeft", "ControlRight", "AltLeft", "AltRight", "ShiftLeft", "ShiftRight", "MetaLeft", "MetaRight"] {
+            for key in [
+                "ControlLeft",
+                "ControlRight",
+                "AltLeft",
+                "AltRight",
+                "ShiftLeft",
+                "ShiftRight",
+                "MetaLeft",
+                "MetaRight",
+            ] {
                 this.send_ws(OutEvent::Key {
                     key: key.into(),
                     state: false,
@@ -629,6 +595,85 @@ impl ConsolePage {
         });
         video.add_controller(focus);
     }
+}
+
+/// Dialog to type text on the host (`POST /api/hid/print`); usable from any page.
+pub fn show_paste_dialog(parent: &impl IsA<gtk::Widget>) {
+    let Some(client) = state().connection.client() else {
+        toast("Not connected");
+        return;
+    };
+    let st = state();
+    let keymaps = st.connection.store.with_state(|s| s.keymaps.clone());
+    let dialog = adw::Dialog::builder()
+        .title("Type text on the host")
+        .content_width(520)
+        .build();
+    let toolbar = adw::ToolbarView::new();
+    toolbar.add_top_bar(&adw::HeaderBar::new());
+    let content = gtk::Box::new(gtk::Orientation::Vertical, 12);
+    content.set_margin_top(12);
+    content.set_margin_bottom(12);
+    content.set_margin_start(12);
+    content.set_margin_end(12);
+    let text_view = gtk::TextView::builder().wrap_mode(gtk::WrapMode::WordChar).build();
+    if let Some(clip) = parent.clipboard().read_text_future().now_or_never_text() {
+        text_view.buffer().set_text(&clip);
+    }
+    let scrolled = gtk::ScrolledWindow::builder()
+        .child(&text_view)
+        .min_content_height(160)
+        .build();
+    scrolled.add_css_class("card");
+    content.append(&scrolled);
+    let group = adw::PreferencesGroup::new();
+    let names: Vec<String> = keymaps.as_ref().map(|k| k.available.clone()).unwrap_or_default();
+    let default_idx = keymaps
+        .as_ref()
+        .and_then(|k| names.iter().position(|n| *n == k.default))
+        .unwrap_or(0) as u32;
+    let name_refs: Vec<&str> = names.iter().map(String::as_str).collect();
+    let keymap_row = util::combo_row(
+        &group,
+        "Keymap",
+        Some("Layout of the host keyboard"),
+        &name_refs,
+        default_idx,
+    );
+    keymap_row.set_visible(!names.is_empty());
+    let slow_row = util::switch_row(&group, "Slow typing", Some("Larger pauses between keys"), false);
+    content.append(&group);
+    let send = util::suggested_button("Type");
+    send.set_halign(gtk::Align::End);
+    content.append(&send);
+    toolbar.set_content(Some(&content));
+    dialog.set_child(Some(&toolbar));
+    let dialog_ref = dialog.clone();
+    send.connect_clicked(move |_| {
+        let buffer = text_view.buffer();
+        let text = buffer.text(&buffer.start_iter(), &buffer.end_iter(), true).to_string();
+        if text.is_empty() {
+            return;
+        }
+        let keymap = names.get(keymap_row.selected() as usize).cloned();
+        let opts = PrintOptions {
+            keymap,
+            limit: Some(0),
+            slow: slow_row.is_active(),
+            delay: None,
+        };
+        let client = client.clone();
+        let dialog = dialog_ref.clone();
+        spawn_result(
+            "Type text",
+            async move { Ok(client.hid().print(&text, &opts).await?) },
+            move |_| {
+                toast("Text typed");
+                dialog.close();
+            },
+        );
+    });
+    dialog.present(Some(parent));
 }
 
 fn button_name(button: u32) -> Option<&'static str> {
@@ -658,6 +703,8 @@ trait NowOrNever {
 impl<F: std::future::Future<Output = Result<Option<glib::GString>, glib::Error>>> NowOrNever for F {
     fn now_or_never_text(self) -> Option<String> {
         use futures_util::FutureExt;
-        self.now_or_never().and_then(|r| r.ok().flatten()).map(|s| s.to_string())
+        self.now_or_never()
+            .and_then(|r| r.ok().flatten())
+            .map(|s| s.to_string())
     }
 }

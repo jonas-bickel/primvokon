@@ -82,7 +82,8 @@ pub struct VisionExtractor {
     pub provider: SharedProvider,
 }
 
-pub const VISION_PROMPT: &str = "Describe everything visible on this screenshot of a work computer as structured text: \
+pub const VISION_PROMPT: &str =
+    "Describe everything visible on this screenshot of a work computer as structured text: \
 open applications and windows, document or page titles, chat or e-mail messages (sender, gist), notifications, \
 and any visible task lists. Transcribe important text verbatim. Be complete but do not speculate.";
 
@@ -176,7 +177,9 @@ pub mod testing {
     pub fn solid_jpeg(w: u32, h: u32, rgb: [u8; 3]) -> Bytes {
         let img = image::RgbImage::from_pixel(w, h, image::Rgb(rgb));
         let mut out = std::io::Cursor::new(Vec::new());
-        image::DynamicImage::ImageRgb8(img).write_to(&mut out, image::ImageFormat::Jpeg).unwrap();
+        image::DynamicImage::ImageRgb8(img)
+            .write_to(&mut out, image::ImageFormat::Jpeg)
+            .unwrap();
         Bytes::from(out.into_inner())
     }
 }

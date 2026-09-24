@@ -490,7 +490,12 @@ mod tests {
         let mut p = ConnectionProfile::new("Home");
         p.base_url = "https://pikvm.local".into();
         s.upsert_profile(p.clone());
-        s.watcher.regions.push(Region { left: 0, top: 0, width: 10, height: 10 });
+        s.watcher.regions.push(Region {
+            left: 0,
+            top: 0,
+            width: 10,
+            height: 10,
+        });
         let text = toml::to_string_pretty(&s).unwrap();
         let back: Settings = toml::from_str(&text).unwrap();
         assert_eq!(back, s);

@@ -2,7 +2,7 @@
 //! exposes the aggregated KVM state to widgets through a GObject with a `changed` signal.
 
 use std::cell::RefCell;
-use std::sync::Arc;
+use std::rc::Rc;
 use std::time::Duration;
 
 use gtk::glib;
@@ -40,7 +40,9 @@ mod imp {
             SIGNALS.get_or_init(|| {
                 vec![
                     // Emitted after a websocket event updated the state; arg = StateSection as u32.
-                    glib::subclass::Signal::builder("changed").param_types([u32::static_type()]).build(),
+                    glib::subclass::Signal::builder("changed")
+                        .param_types([u32::static_type()])
+                        .build(),
                     // Emitted when connection status changed.
                     glib::subclass::Signal::builder("connection").build(),
                 ]
@@ -91,6 +93,11 @@ impl KvmStore {
 
     pub fn status(&self) -> String {
         self.imp().status.borrow().clone()
+    }
+
+    /// Apply an event that did not come from the websocket (e.g. a REST refresh).
+    pub fn apply_external(&self, ev: &KvmEvent) {
+        self.apply(ev);
     }
 
     fn apply(&self, ev: &KvmEvent) {
@@ -150,7 +157,11 @@ pub struct Diagnostics {
 }
 
 /// Build client credentials for a profile from the secret store.
-pub async fn credentials_for(profile: &ConnectionProfile, secrets: &SharedSecrets, totp_code: Option<String>) -> anyhow::Result<Credentials> {
+pub async fn credentials_for(
+    profile: &ConnectionProfile,
+    secrets: &SharedSecrets,
+    totp_code: Option<String>,
+) -> anyhow::Result<Credentials> {
     let password = secrets.get(&profile.secret_key_password()).await?.unwrap_or_default();
     let totp_secret = match profile.totp {
         TotpMode::Secret => secrets.get(&profile.secret_key_totp()).await?,
@@ -201,7 +212,11 @@ pub async fn diagnose(client: &PikvmClient) -> Diagnostics {
             summary: format!(
                 "Connected · kvmd {} · {} · {} ms",
                 info.system.kvmd.version,
-                if info.hw.platform.base.is_empty() { "unknown board".to_string() } else { info.hw.platform.base.clone() },
+                if info.hw.platform.base.is_empty() {
+                    "unknown board".to_string()
+                } else {
+                    info.hw.platform.base.clone()
+                },
                 ms
             ),
         },
@@ -219,10 +234,6 @@ impl Connection {
 
     pub fn ws(&self) -> Option<WsClient> {
         self.ws.borrow().clone()
-    }
-
-    pub fn profile(&self) -> Option<ConnectionProfile> {
-        self.profile.borrow().clone()
     }
 
     pub fn host_name(&self) -> String {
@@ -244,7 +255,7 @@ impl Connection {
     }
 
     /// Connect with a prepared client: start the websocket and feed the store.
-    pub fn attach(self: &Arc<Self>, profile: ConnectionProfile, client: PikvmClient) {
+    pub fn attach(self: &Rc<Self>, profile: ConnectionProfile, client: PikvmClient) {
         self.disconnect();
         let generation = {
             let mut g = self.generation.borrow_mut();
@@ -261,7 +272,7 @@ impl Connection {
         };
         *self.ws.borrow_mut() = Some(ws);
 
-        let this = Arc::clone(self);
+        let this = Rc::clone(self);
         glib::spawn_future_local(async move {
             while let Some(msg) = rx.recv().await {
                 if *this.generation.borrow() != generation {
@@ -270,10 +281,9 @@ impl Connection {
                 match msg {
                     WsMessage::Status(WsStatus::Connecting) => this.store.set_connection(false, "Connecting…"),
                     WsMessage::Status(WsStatus::Connected) => this.store.set_connection(true, "Connected"),
-                    WsMessage::Status(WsStatus::Disconnected { reason, retry_in }) => {
-                        this.store
-                            .set_connection(false, &format!("Reconnecting in {}s ({reason})", retry_in.as_secs()))
-                    }
+                    WsMessage::Status(WsStatus::Disconnected { reason, retry_in }) => this
+                        .store
+                        .set_connection(false, &format!("Reconnecting in {}s ({reason})", retry_in.as_secs())),
                     WsMessage::Status(WsStatus::Closed) => {
                         this.store.set_connection(false, "Offline");
                         break;

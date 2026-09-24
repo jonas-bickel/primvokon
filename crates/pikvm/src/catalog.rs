@@ -172,115 +172,550 @@ macro_rules! ep {
 
 /// Every documented endpoint.
 pub static ENDPOINTS: &[Endpoint] = &[
-    ep!("auth.login", Auth, "Login", "POST", "/api/auth/login", Core, "Obtain a session token (auth_token cookie).", [
-        p("user", TEXT, true, "User name"), p("passwd", TEXT, true, "Password (+TOTP code with 2FA)")]),
-    ep!("auth.check", Auth, "Check", "GET", "/api/auth/check", Core, "200 when authenticated, 401/403 otherwise.", []),
-    ep!("auth.logout", Auth, "Logout", "POST", "/api/auth/logout", Advanced, "Invalidate the session token.", []),
-
-    ep!("system.info", System, "System info", "GET", "/api/info", Core, "General information about the PiKVM device.", [
-        p("fields", TEXT, false, "Comma separated: auth, extras, fan, hw, meta, system")]),
-    ep!("system.log", System, "Log", "GET", "/api/log", Advanced, "Plain-text log of all KVMD services.", [
-        p("seek", INT, false, "Seconds to look back"), p("follow", BOOL, false, "Long-poll for new lines")]),
-
-    ep!("hid.state", Hid, "HID state", "GET", "/api/hid", Core, "Keyboard and mouse state.", []),
-    ep!("hid.set_params", Hid, "Set HID parameters", "POST", "/api/hid/set_params", Advanced, "Emulated device types and jiggler.", [
-        p("keyboard_output", ParamKind::Enum(&["usb", "ps2", "disabled"]), false, "Keyboard type"),
-        p("mouse_output", ParamKind::Enum(&["usb", "usb_win98", "usb_rel", "ps2", "disabled"]), false, "Mouse type"),
-        p("jiggler", BOOL, false, "Mouse jiggler")]),
-    ep!("hid.set_connected", Hid, "Set HID connected", "POST", "/api/hid/set_connected", Advanced, "Connect or disconnect the HID devices.", [
-        p("connected", BOOL, true, "Connected")]),
-    ep!("hid.reset", Hid, "Reset HID", "POST", "/api/hid/reset", Advanced, "Reset the HID devices.", []),
-    ep!("hid.keymaps", Hid, "Keymaps", "GET", "/api/hid/keymaps", Core, "Available keyboard layouts.", []),
+    ep!(
+        "auth.login",
+        Auth,
+        "Login",
+        "POST",
+        "/api/auth/login",
+        Core,
+        "Obtain a session token (auth_token cookie).",
+        [
+            p("user", TEXT, true, "User name"),
+            p("passwd", TEXT, true, "Password (+TOTP code with 2FA)")
+        ]
+    ),
+    ep!(
+        "auth.check",
+        Auth,
+        "Check",
+        "GET",
+        "/api/auth/check",
+        Core,
+        "200 when authenticated, 401/403 otherwise.",
+        []
+    ),
+    ep!(
+        "auth.logout",
+        Auth,
+        "Logout",
+        "POST",
+        "/api/auth/logout",
+        Advanced,
+        "Invalidate the session token.",
+        []
+    ),
+    ep!(
+        "system.info",
+        System,
+        "System info",
+        "GET",
+        "/api/info",
+        Core,
+        "General information about the PiKVM device.",
+        [p(
+            "fields",
+            TEXT,
+            false,
+            "Comma separated: auth, extras, fan, hw, meta, system"
+        )]
+    ),
+    ep!(
+        "system.log",
+        System,
+        "Log",
+        "GET",
+        "/api/log",
+        Advanced,
+        "Plain-text log of all KVMD services.",
+        [
+            p("seek", INT, false, "Seconds to look back"),
+            p("follow", BOOL, false, "Long-poll for new lines")
+        ]
+    ),
+    ep!(
+        "hid.state",
+        Hid,
+        "HID state",
+        "GET",
+        "/api/hid",
+        Core,
+        "Keyboard and mouse state.",
+        []
+    ),
+    ep!(
+        "hid.set_params",
+        Hid,
+        "Set HID parameters",
+        "POST",
+        "/api/hid/set_params",
+        Advanced,
+        "Emulated device types and jiggler.",
+        [
+            p(
+                "keyboard_output",
+                ParamKind::Enum(&["usb", "ps2", "disabled"]),
+                false,
+                "Keyboard type"
+            ),
+            p(
+                "mouse_output",
+                ParamKind::Enum(&["usb", "usb_win98", "usb_rel", "ps2", "disabled"]),
+                false,
+                "Mouse type"
+            ),
+            p("jiggler", BOOL, false, "Mouse jiggler")
+        ]
+    ),
+    ep!(
+        "hid.set_connected",
+        Hid,
+        "Set HID connected",
+        "POST",
+        "/api/hid/set_connected",
+        Advanced,
+        "Connect or disconnect the HID devices.",
+        [p("connected", BOOL, true, "Connected")]
+    ),
+    ep!(
+        "hid.reset",
+        Hid,
+        "Reset HID",
+        "POST",
+        "/api/hid/reset",
+        Advanced,
+        "Reset the HID devices.",
+        []
+    ),
+    ep!(
+        "hid.keymaps",
+        Hid,
+        "Keymaps",
+        "GET",
+        "/api/hid/keymaps",
+        Core,
+        "Available keyboard layouts.",
+        []
+    ),
     ep!("hid.print", Hid, "Type text", "POST", "/api/hid/print", Core, "Type text on the host.", [
         p("text", TEXT, true, "Text to type"), p("keymap", TEXT, false, "Keymap, e.g. de"),
         p("limit", INT, false, "Max characters (0 = unlimited)"), p("slow", BOOL, false, "Slow typing"),
         p("delay", FLOAT, false, "Delay between keys in slow mode (0..5)")], body: BodySource::TextParam("text")),
-    ep!("hid.send_shortcut", Hid, "Send shortcut", "POST", "/api/hid/events/send_shortcut", Core, "Key combination, comma separated web names.", [
-        p("keys", TEXT, true, "e.g. ControlLeft,AltLeft,Delete")]),
-    ep!("hid.send_key", Hid, "Send key", "POST", "/api/hid/events/send_key", Advanced, "Single key event.", [
-        p("key", TEXT, true, "Web key name"), p("state", BOOL, false, "Press (1) / release (0)"), p("finish", BOOL, false, "Release non-modifiers")]),
-    ep!("hid.send_mouse_button", Hid, "Mouse button", "POST", "/api/hid/events/send_mouse_button", Advanced, "Mouse button event.", [
-        p("button", ParamKind::Enum(&["left", "middle", "right", "up", "down"]), true, "Button"), p("state", BOOL, false, "Press / release")]),
-    ep!("hid.send_mouse_move", Hid, "Mouse move", "POST", "/api/hid/events/send_mouse_move", Advanced, "Absolute move, 0,0 is the centre.", [
-        p("to_x", INT, true, "X"), p("to_y", INT, true, "Y")]),
-    ep!("hid.send_mouse_relative", Hid, "Mouse move relative", "POST", "/api/hid/events/send_mouse_relative", Advanced, "Relative move.", [
-        p("delta_x", INT, true, "dx"), p("delta_y", INT, true, "dy")]),
-    ep!("hid.send_mouse_wheel", Hid, "Mouse wheel", "POST", "/api/hid/events/send_mouse_wheel", Advanced, "Scroll.", [
-        p("delta_x", INT, true, "dx"), p("delta_y", INT, true, "dy")]),
-
-    ep!("atx.state", Atx, "ATX state", "GET", "/api/atx", Core, "Power and HDD LEDs, busy flag.", []),
+    ep!(
+        "hid.send_shortcut",
+        Hid,
+        "Send shortcut",
+        "POST",
+        "/api/hid/events/send_shortcut",
+        Core,
+        "Key combination, comma separated web names.",
+        [p("keys", TEXT, true, "e.g. ControlLeft,AltLeft,Delete")]
+    ),
+    ep!(
+        "hid.send_key",
+        Hid,
+        "Send key",
+        "POST",
+        "/api/hid/events/send_key",
+        Advanced,
+        "Single key event.",
+        [
+            p("key", TEXT, true, "Web key name"),
+            p("state", BOOL, false, "Press (1) / release (0)"),
+            p("finish", BOOL, false, "Release non-modifiers")
+        ]
+    ),
+    ep!(
+        "hid.send_mouse_button",
+        Hid,
+        "Mouse button",
+        "POST",
+        "/api/hid/events/send_mouse_button",
+        Advanced,
+        "Mouse button event.",
+        [
+            p(
+                "button",
+                ParamKind::Enum(&["left", "middle", "right", "up", "down"]),
+                true,
+                "Button"
+            ),
+            p("state", BOOL, false, "Press / release")
+        ]
+    ),
+    ep!(
+        "hid.send_mouse_move",
+        Hid,
+        "Mouse move",
+        "POST",
+        "/api/hid/events/send_mouse_move",
+        Advanced,
+        "Absolute move, 0,0 is the centre.",
+        [p("to_x", INT, true, "X"), p("to_y", INT, true, "Y")]
+    ),
+    ep!(
+        "hid.send_mouse_relative",
+        Hid,
+        "Mouse move relative",
+        "POST",
+        "/api/hid/events/send_mouse_relative",
+        Advanced,
+        "Relative move.",
+        [p("delta_x", INT, true, "dx"), p("delta_y", INT, true, "dy")]
+    ),
+    ep!(
+        "hid.send_mouse_wheel",
+        Hid,
+        "Mouse wheel",
+        "POST",
+        "/api/hid/events/send_mouse_wheel",
+        Advanced,
+        "Scroll.",
+        [p("delta_x", INT, true, "dx"), p("delta_y", INT, true, "dy")]
+    ),
+    ep!(
+        "atx.state",
+        Atx,
+        "ATX state",
+        "GET",
+        "/api/atx",
+        Core,
+        "Power and HDD LEDs, busy flag.",
+        []
+    ),
     ep!("atx.power", Atx, "Set power", "POST", "/api/atx/power", Core, "Change the ATX power state.", [
         p("action", ParamKind::Enum(&["on", "off", "off_hard", "reset_hard"]), true, "Action"), p("wait", BOOL, false, "Wait for completion")], destructive: true),
     ep!("atx.click", Atx, "Click button", "POST", "/api/atx/click", Core, "Press a case button.", [
         p("button", ParamKind::Enum(&["power", "power_long", "reset"]), true, "Button"), p("wait", BOOL, false, "Wait for completion")], destructive: true),
-
-    ep!("msd.state", Msd, "MSD state", "GET", "/api/msd", Core, "Drive state and images.", []),
-    ep!("msd.write", Msd, "Upload image", "POST", "/api/msd/write", Advanced, "Upload an image (binary body). Use the MSD card for file uploads.", [
-        p("image", TEXT, true, "Image name")]),
-    ep!("msd.write_remote", Msd, "Upload from URL", "POST", "/api/msd/write_remote", Advanced, "Download an image from a URL onto the PiKVM (long-polling).", [
-        p("url", TEXT, true, "HTTP(S) URL"), p("image", TEXT, false, "Image name"), p("timeout", INT, false, "Remote timeout seconds")]),
-    ep!("msd.set_params", Msd, "Set MSD parameters", "POST", "/api/msd/set_params", Core, "Select image and drive mode.", [
-        p("image", TEXT, false, "Image name"), p("cdrom", BOOL, false, "CD-ROM (1) or Flash (0)"), p("rw", BOOL, false, "Read-write")]),
-    ep!("msd.set_connected", Msd, "Connect MSD", "POST", "/api/msd/set_connected", Core, "Connect or disconnect the drive.", [
-        p("connected", BOOL, true, "Connected")]),
+    ep!(
+        "msd.state",
+        Msd,
+        "MSD state",
+        "GET",
+        "/api/msd",
+        Core,
+        "Drive state and images.",
+        []
+    ),
+    ep!(
+        "msd.write",
+        Msd,
+        "Upload image",
+        "POST",
+        "/api/msd/write",
+        Advanced,
+        "Upload an image (binary body). Use the MSD card for file uploads.",
+        [p("image", TEXT, true, "Image name")]
+    ),
+    ep!(
+        "msd.write_remote",
+        Msd,
+        "Upload from URL",
+        "POST",
+        "/api/msd/write_remote",
+        Advanced,
+        "Download an image from a URL onto the PiKVM (long-polling).",
+        [
+            p("url", TEXT, true, "HTTP(S) URL"),
+            p("image", TEXT, false, "Image name"),
+            p("timeout", INT, false, "Remote timeout seconds")
+        ]
+    ),
+    ep!(
+        "msd.set_params",
+        Msd,
+        "Set MSD parameters",
+        "POST",
+        "/api/msd/set_params",
+        Core,
+        "Select image and drive mode.",
+        [
+            p("image", TEXT, false, "Image name"),
+            p("cdrom", BOOL, false, "CD-ROM (1) or Flash (0)"),
+            p("rw", BOOL, false, "Read-write")
+        ]
+    ),
+    ep!(
+        "msd.set_connected",
+        Msd,
+        "Connect MSD",
+        "POST",
+        "/api/msd/set_connected",
+        Core,
+        "Connect or disconnect the drive.",
+        [p("connected", BOOL, true, "Connected")]
+    ),
     ep!("msd.remove", Msd, "Remove image", "POST", "/api/msd/remove", Advanced, "Delete an image.", [
         p("image", TEXT, true, "Image name")], destructive: true),
     ep!("msd.reset", Msd, "Reset MSD", "POST", "/api/msd/reset", Advanced, "Reset the drive to defaults.", [], destructive: true),
-
-    ep!("gpio.state", Gpio, "GPIO state", "GET", "/api/gpio", Core, "Model and state of all channels.", []),
-    ep!("gpio.switch", Gpio, "Switch channel", "POST", "/api/gpio/switch", Core, "Set a channel on or off.", [
-        p("channel", TEXT, true, "Channel"), p("state", BOOL, true, "State"), p("wait", BOOL, false, "Wait")]),
-    ep!("gpio.pulse", Gpio, "Pulse channel", "POST", "/api/gpio/pulse", Core, "Pulse a channel.", [
-        p("channel", TEXT, true, "Channel"), p("delay", FLOAT, false, "Seconds (0 = default)"), p("wait", BOOL, false, "Wait")]),
-
-    ep!("streamer.state", Streamer, "Streamer state", "GET", "/api/streamer", Advanced, "Encoder, source, sinks and clients.", []),
-    ep!("streamer.snapshot", Streamer, "Snapshot", "GET", "/api/streamer/snapshot", Advanced, "JPEG snapshot, optionally OCR or preview.", [
-        p("save", BOOL, false, "Save"), p("load", BOOL, false, "Load saved"), p("allow_offline", BOOL, false, "Allow offline"),
-        p("ocr", BOOL, false, "Run OCR"), p("ocr_langs", TEXT, false, "e.g. eng,deu"),
-        p("ocr_left", INT, false, "Region left"), p("ocr_top", INT, false, "Region top"), p("ocr_right", INT, false, "Region right"), p("ocr_bottom", INT, false, "Region bottom"),
-        p("preview", BOOL, false, "Preview"), p("preview_max_width", INT, false, "Max width"), p("preview_max_height", INT, false, "Max height"), p("preview_quality", INT, false, "JPEG quality")]),
-    ep!("streamer.delete_snapshot", Streamer, "Delete snapshot", "DELETE", "/api/streamer/snapshot", Advanced, "Remove the saved snapshot.", []),
-    ep!("streamer.ocr", Streamer, "OCR state", "GET", "/api/streamer/ocr", Advanced, "OCR availability and languages.", []),
-    ep!("streamer.set_params", Streamer, "Set stream parameters", "POST", "/api/streamer/set_params", Advanced, "Quality, FPS and H.264 settings.", [
-        p("quality", INT, false, "JPEG quality"), p("desired_fps", INT, false, "FPS"), p("h264_bitrate", INT, false, "kbps"), p("h264_gop", INT, false, "GOP")]),
-
-    ep!("switch.state", Switch, "Switch state", "GET", "/api/switch", Core, "PiKVM Switch information.", []),
-    ep!("switch.set_active_prev", Switch, "Previous port", "POST", "/api/switch/set_active_prev", Core, "Activate the previous port.", []),
-    ep!("switch.set_active_next", Switch, "Next port", "POST", "/api/switch/set_active_next", Core, "Activate the next port.", []),
-    ep!("switch.set_active", Switch, "Set active port", "POST", "/api/switch/set_active", Core, "Activate a specific port.", [
-        p("port", TEXT, true, "0..19 or unit.port")]),
-    ep!("switch.set_beacon", Switch, "Set beacon", "POST", "/api/switch/set_beacon", Advanced, "Beacon lights.", [
-        p("state", BOOL, true, "On/off"), p("port", TEXT, false, "Port"), p("uplink", INT, false, "Uplink"), p("downlink", INT, false, "Downlink")]),
-    ep!("switch.set_port_params", Switch, "Set port parameters", "POST", "/api/switch/set_port_params", Advanced, "Per-port configuration.", [
-        p("port", TEXT, true, "Port"), p("edid_id", TEXT, false, "EDID id"), p("dummy", BOOL, false, "Dummy display"), p("name", TEXT, false, "Name"),
-        p("atx_click_power_delay", FLOAT, false, "0..10"), p("atx_click_power_long_delay", FLOAT, false, "0..10"), p("atx_click_reset_delay", FLOAT, false, "0..10")]),
+    ep!(
+        "gpio.state",
+        Gpio,
+        "GPIO state",
+        "GET",
+        "/api/gpio",
+        Core,
+        "Model and state of all channels.",
+        []
+    ),
+    ep!(
+        "gpio.switch",
+        Gpio,
+        "Switch channel",
+        "POST",
+        "/api/gpio/switch",
+        Core,
+        "Set a channel on or off.",
+        [
+            p("channel", TEXT, true, "Channel"),
+            p("state", BOOL, true, "State"),
+            p("wait", BOOL, false, "Wait")
+        ]
+    ),
+    ep!(
+        "gpio.pulse",
+        Gpio,
+        "Pulse channel",
+        "POST",
+        "/api/gpio/pulse",
+        Core,
+        "Pulse a channel.",
+        [
+            p("channel", TEXT, true, "Channel"),
+            p("delay", FLOAT, false, "Seconds (0 = default)"),
+            p("wait", BOOL, false, "Wait")
+        ]
+    ),
+    ep!(
+        "streamer.state",
+        Streamer,
+        "Streamer state",
+        "GET",
+        "/api/streamer",
+        Advanced,
+        "Encoder, source, sinks and clients.",
+        []
+    ),
+    ep!(
+        "streamer.snapshot",
+        Streamer,
+        "Snapshot",
+        "GET",
+        "/api/streamer/snapshot",
+        Advanced,
+        "JPEG snapshot, optionally OCR or preview.",
+        [
+            p("save", BOOL, false, "Save"),
+            p("load", BOOL, false, "Load saved"),
+            p("allow_offline", BOOL, false, "Allow offline"),
+            p("ocr", BOOL, false, "Run OCR"),
+            p("ocr_langs", TEXT, false, "e.g. eng,deu"),
+            p("ocr_left", INT, false, "Region left"),
+            p("ocr_top", INT, false, "Region top"),
+            p("ocr_right", INT, false, "Region right"),
+            p("ocr_bottom", INT, false, "Region bottom"),
+            p("preview", BOOL, false, "Preview"),
+            p("preview_max_width", INT, false, "Max width"),
+            p("preview_max_height", INT, false, "Max height"),
+            p("preview_quality", INT, false, "JPEG quality")
+        ]
+    ),
+    ep!(
+        "streamer.delete_snapshot",
+        Streamer,
+        "Delete snapshot",
+        "DELETE",
+        "/api/streamer/snapshot",
+        Advanced,
+        "Remove the saved snapshot.",
+        []
+    ),
+    ep!(
+        "streamer.ocr",
+        Streamer,
+        "OCR state",
+        "GET",
+        "/api/streamer/ocr",
+        Advanced,
+        "OCR availability and languages.",
+        []
+    ),
+    ep!(
+        "streamer.set_params",
+        Streamer,
+        "Set stream parameters",
+        "POST",
+        "/api/streamer/set_params",
+        Advanced,
+        "Quality, FPS and H.264 settings.",
+        [
+            p("quality", INT, false, "JPEG quality"),
+            p("desired_fps", INT, false, "FPS"),
+            p("h264_bitrate", INT, false, "kbps"),
+            p("h264_gop", INT, false, "GOP")
+        ]
+    ),
+    ep!(
+        "switch.state",
+        Switch,
+        "Switch state",
+        "GET",
+        "/api/switch",
+        Core,
+        "PiKVM Switch information.",
+        []
+    ),
+    ep!(
+        "switch.set_active_prev",
+        Switch,
+        "Previous port",
+        "POST",
+        "/api/switch/set_active_prev",
+        Core,
+        "Activate the previous port.",
+        []
+    ),
+    ep!(
+        "switch.set_active_next",
+        Switch,
+        "Next port",
+        "POST",
+        "/api/switch/set_active_next",
+        Core,
+        "Activate the next port.",
+        []
+    ),
+    ep!(
+        "switch.set_active",
+        Switch,
+        "Set active port",
+        "POST",
+        "/api/switch/set_active",
+        Core,
+        "Activate a specific port.",
+        [p("port", TEXT, true, "0..19 or unit.port")]
+    ),
+    ep!(
+        "switch.set_beacon",
+        Switch,
+        "Set beacon",
+        "POST",
+        "/api/switch/set_beacon",
+        Advanced,
+        "Beacon lights.",
+        [
+            p("state", BOOL, true, "On/off"),
+            p("port", TEXT, false, "Port"),
+            p("uplink", INT, false, "Uplink"),
+            p("downlink", INT, false, "Downlink")
+        ]
+    ),
+    ep!(
+        "switch.set_port_params",
+        Switch,
+        "Set port parameters",
+        "POST",
+        "/api/switch/set_port_params",
+        Advanced,
+        "Per-port configuration.",
+        [
+            p("port", TEXT, true, "Port"),
+            p("edid_id", TEXT, false, "EDID id"),
+            p("dummy", BOOL, false, "Dummy display"),
+            p("name", TEXT, false, "Name"),
+            p("atx_click_power_delay", FLOAT, false, "0..10"),
+            p("atx_click_power_long_delay", FLOAT, false, "0..10"),
+            p("atx_click_reset_delay", FLOAT, false, "0..10")
+        ]
+    ),
     ep!("switch.set_colors", Switch, "Set beacon colour", "POST", "/api/switch/set_colors", Advanced, "Body RRGGBB:BRIGHT:BLINK, e.g. FFA500:BF:0028.", [
         p("beacon", TEXT, true, "Colour spec")], body: BodySource::TextParam("beacon")),
     ep!("switch.reset", Switch, "Reboot switch", "POST", "/api/switch/reset", Advanced, "Reboot a unit, optionally into the bootloader.", [
         p("unit", INT, true, "Unit 0..4"), p("bootloader", BOOL, false, "Enter bootloader")], destructive: true),
-    ep!("switch.edid_create", Switch, "Create EDID", "POST", "/api/switch/edids/create", Advanced, "Create an EDID configuration.", [
-        p("name", TEXT, true, "Name"), p("data", TEXT, true, "Hex data")]),
-    ep!("switch.edid_change", Switch, "Change EDID", "POST", "/api/switch/edids/change", Advanced, "Modify an EDID configuration.", [
-        p("id", TEXT, true, "EDID id"), p("name", TEXT, false, "Name"), p("data", TEXT, false, "Hex data")]),
+    ep!(
+        "switch.edid_create",
+        Switch,
+        "Create EDID",
+        "POST",
+        "/api/switch/edids/create",
+        Advanced,
+        "Create an EDID configuration.",
+        [p("name", TEXT, true, "Name"), p("data", TEXT, true, "Hex data")]
+    ),
+    ep!(
+        "switch.edid_change",
+        Switch,
+        "Change EDID",
+        "POST",
+        "/api/switch/edids/change",
+        Advanced,
+        "Modify an EDID configuration.",
+        [
+            p("id", TEXT, true, "EDID id"),
+            p("name", TEXT, false, "Name"),
+            p("data", TEXT, false, "Hex data")
+        ]
+    ),
     ep!("switch.edid_remove", Switch, "Remove EDID", "POST", "/api/switch/edids/remove", Advanced, "Delete an EDID configuration.", [
         p("id", TEXT, true, "EDID id")], destructive: true),
     ep!("switch.atx_power", Switch, "Port ATX power", "POST", "/api/switch/atx/power", Advanced, "ATX power for a port.", [
         p("port", TEXT, true, "Port"), p("action", ParamKind::Enum(&["on", "off", "off_hard", "reset_hard"]), true, "Action")], destructive: true),
     ep!("switch.atx_click", Switch, "Port ATX click", "POST", "/api/switch/atx/click", Advanced, "ATX button for a port.", [
         p("port", TEXT, true, "Port"), p("button", ParamKind::Enum(&["power", "power_long", "reset"]), true, "Button")], destructive: true),
-
-    ep!("redfish.root", Redfish, "Service root", "GET", "/api/redfish/v1", Explorer, "Redfish service discovery.", []),
-    ep!("redfish.systems", Redfish, "Systems", "GET", "/api/redfish/v1/Systems", Explorer, "Computer systems collection.", []),
-    ep!("redfish.system", Redfish, "System", "GET", "/api/redfish/v1/Systems/{id}", Explorer, "System details.", [
-        p("id", TEXT, true, "0 or SwitchPortN")]),
-    ep!("redfish.patch", Redfish, "Patch system", "PATCH", "/api/redfish/v1/Systems/{id}", Explorer, "No-op returning 204.", [
-        p("id", TEXT, true, "0 or SwitchPortN")]),
+    ep!(
+        "redfish.root",
+        Redfish,
+        "Service root",
+        "GET",
+        "/api/redfish/v1",
+        Explorer,
+        "Redfish service discovery.",
+        []
+    ),
+    ep!(
+        "redfish.systems",
+        Redfish,
+        "Systems",
+        "GET",
+        "/api/redfish/v1/Systems",
+        Explorer,
+        "Computer systems collection.",
+        []
+    ),
+    ep!(
+        "redfish.system",
+        Redfish,
+        "System",
+        "GET",
+        "/api/redfish/v1/Systems/{id}",
+        Explorer,
+        "System details.",
+        [p("id", TEXT, true, "0 or SwitchPortN")]
+    ),
+    ep!(
+        "redfish.patch",
+        Redfish,
+        "Patch system",
+        "PATCH",
+        "/api/redfish/v1/Systems/{id}",
+        Explorer,
+        "No-op returning 204.",
+        [p("id", TEXT, true, "0 or SwitchPortN")]
+    ),
     ep!("redfish.reset", Redfish, "Reset", "POST", "/api/redfish/v1/Systems/{id}/Actions/ComputerSystem.Reset", Explorer, "Power control via Redfish.", [
         p("id", TEXT, true, "0 or SwitchPortN"),
         p("ResetType", ParamKind::Enum(&["On", "ForceOff", "GracefulShutdown", "ForceRestart", "ForceOn", "PushPowerButton"]), true, "Reset type")],
         body: BodySource::JsonParam("ResetType", "ResetType"), destructive: true),
-
-    ep!("misc.prometheus", Misc, "Prometheus metrics", "GET", "/api/export/prometheus/metrics", Explorer, "Metrics in Prometheus format.", []),
+    ep!(
+        "misc.prometheus",
+        Misc,
+        "Prometheus metrics",
+        "GET",
+        "/api/export/prometheus/metrics",
+        Explorer,
+        "Metrics in Prometheus format.",
+        []
+    ),
 ];
 
 /// Endpoints in one category, in catalogue order.

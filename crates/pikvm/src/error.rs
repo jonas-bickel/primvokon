@@ -70,10 +70,7 @@ impl PikvmError {
     pub fn is_transient(&self) -> bool {
         matches!(
             self,
-            PikvmError::Transport(_)
-                | PikvmError::WebSocket(_)
-                | PikvmError::Stream(_)
-                | PikvmError::Unavailable(_)
+            PikvmError::Transport(_) | PikvmError::WebSocket(_) | PikvmError::Stream(_) | PikvmError::Unavailable(_)
         )
     }
 

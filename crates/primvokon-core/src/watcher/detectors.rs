@@ -71,7 +71,9 @@ impl OcrDiffDetector {
 /// `12:34`, `9:05 pm` and similar lines change every minute and are not interesting.
 pub fn looks_like_clock(line: &str) -> bool {
     let core = line.trim_end_matches(" am").trim_end_matches(" pm");
-    let Some((h, m)) = core.split_once(':') else { return false };
+    let Some((h, m)) = core.split_once(':') else {
+        return false;
+    };
     h.len() <= 2 && h.chars().all(|c| c.is_ascii_digit()) && m.len() == 2 && m.chars().all(|c| c.is_ascii_digit())
 }
 
@@ -142,7 +144,9 @@ impl PixelDiffDetector {
         let img = image::load_from_memory(jpeg)?;
         let mut out = Vec::new();
         if self.regions.is_empty() {
-            let g = img.resize_exact(THUMB_W, THUMB_H, image::imageops::FilterType::Triangle).to_luma8();
+            let g = img
+                .resize_exact(THUMB_W, THUMB_H, image::imageops::FilterType::Triangle)
+                .to_luma8();
             out.extend_from_slice(g.as_raw());
         } else {
             for r in &self.regions {
@@ -331,15 +335,20 @@ impl ChangeDetector for CombinedDetector {
 }
 
 /// Build the detector selected in settings. `vision` is required for AI based kinds.
-pub fn build_detector(settings: &WatcherSettings, vision: Option<SharedProvider>) -> anyhow::Result<Box<dyn ChangeDetector>> {
+pub fn build_detector(
+    settings: &WatcherSettings,
+    vision: Option<SharedProvider>,
+) -> anyhow::Result<Box<dyn ChangeDetector>> {
     let ocr = || OcrDiffDetector::new(settings.text_threshold, settings.ignore_phrases.clone());
     let pixel = || PixelDiffDetector::new(settings.pixel_threshold, settings.regions.clone());
     Ok(match settings.detector {
         DetectorKind::OcrDiff => Box::new(ocr()),
         DetectorKind::PixelDiff => Box::new(pixel()),
-        DetectorKind::AiClassifier => Box::new(AiClassifierDetector::new(
-            vision.ok_or_else(|| anyhow::anyhow!("the AI classifier needs a vision provider"))?,
-        )),
+        DetectorKind::AiClassifier => {
+            Box::new(AiClassifierDetector::new(vision.ok_or_else(|| {
+                anyhow::anyhow!("the AI classifier needs a vision provider")
+            })?))
+        }
         DetectorKind::Combined => Box::new(CombinedDetector::new(
             Box::new(pixel()),
             vision.ok_or_else(|| anyhow::anyhow!("the combined detector needs a vision provider"))?,
@@ -364,7 +373,10 @@ mod tests {
             text: Some("Inbox\n12:32\nBattery 79%\nHello team".into()),
             ..Default::default()
         };
-        assert!(d.observe(&s2).await.unwrap().is_none(), "clock and ignored phrase are not changes");
+        assert!(
+            d.observe(&s2).await.unwrap().is_none(),
+            "clock and ignored phrase are not changes"
+        );
         let s3 = Sample {
             text: Some("Inbox\n12:33\nAnna: are you joining?\nHello team".into()),
             ..Default::default()
@@ -392,7 +404,9 @@ mod tests {
     #[test]
     fn classification_json_is_parsed_leniently() {
         assert!(parse_classification("Sure: {\"changed\": false}").is_none());
-        let c = parse_classification("{\"changed\": true, \"reason\": \"New Teams message\", \"detail\": \"Anna: hi\"}").unwrap();
+        let c =
+            parse_classification("{\"changed\": true, \"reason\": \"New Teams message\", \"detail\": \"Anna: hi\"}")
+                .unwrap();
         assert_eq!(c.reason, "New Teams message");
         assert!(looks_like_clock("12:34"));
         assert!(!looks_like_clock("meeting at noon"));

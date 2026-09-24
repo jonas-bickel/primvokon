@@ -129,7 +129,8 @@ impl PvWindow {
             this.update_capability_pages();
         });
         let this = self.clone();
-        st.bus.connect_signal("services-changed", move || this.update_services_pill());
+        st.bus
+            .connect_signal("services-changed", move || this.update_services_pill());
         let this = self.clone();
         st.bus.connect_signal("secrets-ready", move || {
             if state().secrets().map(|s| s.is_fallback()).unwrap_or(false) {
@@ -140,6 +141,16 @@ impl PvWindow {
         });
         self.update_capability_pages();
         self.update_services_pill();
+
+        // Debug aid: PRIMVOKON_START_PAGE=control|watch|recall|agent|prefs opens that view.
+        if let Ok(page) = std::env::var("PRIMVOKON_START_PAGE") {
+            if page == "prefs" {
+                let this = self.clone();
+                glib::idle_add_local_once(move || crate::prefs::PreferencesDialog::new().present(Some(&this)));
+            } else {
+                stack.set_visible_child_name(&page);
+            }
+        }
     }
 
     fn setup_actions(&self) {
@@ -190,7 +201,11 @@ impl PvWindow {
         let settings = state().settings();
         for p in &settings.profiles {
             let active = settings.active_profile.as_deref() == Some(p.id.as_str());
-            let label = if active { format!("● {}", p.name) } else { format!("○ {}", p.name) };
+            let label = if active {
+                format!("● {}", p.name)
+            } else {
+                format!("○ {}", p.name)
+            };
             let item = gio::MenuItem::new(Some(&label), None);
             item.set_action_and_target_value(Some("win.select-profile"), Some(&p.id.to_variant()));
             menu.append_item(&item);
@@ -199,7 +214,8 @@ impl PvWindow {
             .active_profile()
             .map(|p| p.name.clone())
             .unwrap_or_else(|| "No profile".into());
-        imp.profile_button.set_tooltip_text(Some(&format!("PiKVM profile: {title}")));
+        imp.profile_button
+            .set_tooltip_text(Some(&format!("PiKVM profile: {title}")));
     }
 
     /// Hide pages whose capability is switched off (F-CAP-2).
@@ -212,7 +228,7 @@ impl PvWindow {
             (imp.recall.upcast_ref::<gtk::Widget>(), caps.recall),
             (imp.agent.upcast_ref::<gtk::Widget>(), caps.agent),
         ] {
-            if let Some(page) = stack.page(child).downcast::<adw::ViewStackPage>().ok() {
+            if let Ok(page) = stack.page(child).downcast::<adw::ViewStackPage>() {
                 page.set_visible(enabled);
             }
         }
@@ -273,7 +289,10 @@ impl PvWindow {
             .heading("Two-factor code")
             .body("Enter the current one-time code for the PiKVM login.")
             .build();
-        let entry = gtk::Entry::builder().input_purpose(gtk::InputPurpose::Digits).max_length(6).build();
+        let entry = gtk::Entry::builder()
+            .input_purpose(gtk::InputPurpose::Digits)
+            .max_length(6)
+            .build();
         dialog.set_extra_child(Some(&entry));
         dialog.add_response("cancel", "Cancel");
         dialog.add_response("ok", "Connect");

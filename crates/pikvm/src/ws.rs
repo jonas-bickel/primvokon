@@ -20,7 +20,10 @@ pub enum WsStatus {
     Connecting,
     Connected,
     /// Disconnected with the reason; a reconnect is scheduled after `retry_in`.
-    Disconnected { reason: String, retry_in: Duration },
+    Disconnected {
+        reason: String,
+        retry_in: Duration,
+    },
     /// The session was cancelled and will not reconnect.
     Closed,
 }
@@ -60,7 +63,11 @@ pub struct WsClient {
 impl WsClient {
     /// Start a supervised session. `stream=true` tells kvmd to run the video streamer for this
     /// client; background services use `false`.
-    pub fn connect(client: PikvmClient, stream: bool, policy: ReconnectPolicy) -> (WsClient, mpsc::Receiver<WsMessage>) {
+    pub fn connect(
+        client: PikvmClient,
+        stream: bool,
+        policy: ReconnectPolicy,
+    ) -> (WsClient, mpsc::Receiver<WsMessage>) {
         let (msg_tx, msg_rx) = mpsc::channel(256);
         let (out_tx, out_rx) = mpsc::channel(512);
         let cancel = CancellationToken::new();
@@ -184,7 +191,7 @@ async fn run_session(
     let _ = msg_tx.send(WsMessage::Status(WsStatus::Connected)).await;
     let mut ping = tokio::time::interval(policy.ping_interval);
     ping.tick().await; // first tick fires immediately
-    // Drop stale input queued while offline.
+                       // Drop stale input queued while offline.
     while out_rx.try_recv().is_ok() {}
     loop {
         tokio::select! {

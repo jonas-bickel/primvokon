@@ -28,7 +28,13 @@ pub fn toast(message: &str) {
 /// Error toast with a "Details" button that opens the full message.
 pub fn toast_error(context: &str, err: &dyn std::fmt::Display) {
     let full = err.to_string();
-    let short = full.lines().next().unwrap_or_default().chars().take(90).collect::<String>();
+    let short = full
+        .lines()
+        .next()
+        .unwrap_or_default()
+        .chars()
+        .take(90)
+        .collect::<String>();
     tracing::warn!("{context}: {full}");
     TOAST_OVERLAY.with(|t| {
         if let Some(overlay) = t.borrow().as_ref() {
@@ -79,7 +85,13 @@ where
 }
 
 /// Ask for confirmation before running `on_confirm`.
-pub fn confirm(parent: &impl IsA<gtk::Widget>, heading: &str, body: &str, action: &str, on_confirm: impl FnOnce() + 'static) {
+pub fn confirm(
+    parent: &impl IsA<gtk::Widget>,
+    heading: &str,
+    body: &str,
+    action: &str,
+    on_confirm: impl FnOnce() + 'static,
+) {
     let dialog = adw::AlertDialog::builder().heading(heading).body(body).build();
     dialog.add_response("cancel", "Cancel");
     dialog.add_response("confirm", action);
@@ -180,24 +192,38 @@ pub fn on_off(b: bool) -> &'static str {
 
 /// A preferences-style card.
 pub fn card(title: &str, description: Option<&str>) -> adw::PreferencesGroup {
-    let g = adw::PreferencesGroup::builder().title(title).build();
+    let g = adw::PreferencesGroup::builder()
+        .title(glib::markup_escape_text(title))
+        .build();
     if let Some(d) = description {
-        g.set_description(Some(d));
+        g.set_description(Some(&glib::markup_escape_text(d)));
     }
     g
 }
 
 /// Key/value row; the value is shown as the subtitle.
 pub fn kv_row(group: &adw::PreferencesGroup, title: &str) -> adw::ActionRow {
-    let row = adw::ActionRow::builder().title(title).subtitle("—").subtitle_selectable(true).build();
+    let row = adw::ActionRow::builder()
+        .title(title)
+        .subtitle("—")
+        .subtitle_selectable(true)
+        .build();
     row.add_css_class("property");
     group.add(&row);
     row
 }
 
 /// Row with a button at the end.
-pub fn button_row(group: &adw::PreferencesGroup, title: &str, subtitle: Option<&str>, button: &gtk::Button) -> adw::ActionRow {
-    let row = adw::ActionRow::builder().title(title).activatable_widget(button).build();
+pub fn button_row(
+    group: &adw::PreferencesGroup,
+    title: &str,
+    subtitle: Option<&str>,
+    button: &gtk::Button,
+) -> adw::ActionRow {
+    let row = adw::ActionRow::builder()
+        .title(title)
+        .activatable_widget(button)
+        .build();
     if let Some(s) = subtitle {
         row.set_subtitle(s);
     }
@@ -256,7 +282,15 @@ pub fn switch_row(group: &adw::PreferencesGroup, title: &str, subtitle: Option<&
     r
 }
 
-pub fn spin_row(group: &adw::PreferencesGroup, title: &str, subtitle: Option<&str>, min: f64, max: f64, step: f64, value: f64) -> adw::SpinRow {
+pub fn spin_row(
+    group: &adw::PreferencesGroup,
+    title: &str,
+    subtitle: Option<&str>,
+    min: f64,
+    max: f64,
+    step: f64,
+    value: f64,
+) -> adw::SpinRow {
     let r = adw::SpinRow::with_range(min, max, step);
     r.set_title(title);
     if let Some(s) = subtitle {
@@ -267,9 +301,19 @@ pub fn spin_row(group: &adw::PreferencesGroup, title: &str, subtitle: Option<&st
     r
 }
 
-pub fn combo_row(group: &adw::PreferencesGroup, title: &str, subtitle: Option<&str>, items: &[&str], selected: u32) -> adw::ComboRow {
+pub fn combo_row(
+    group: &adw::PreferencesGroup,
+    title: &str,
+    subtitle: Option<&str>,
+    items: &[&str],
+    selected: u32,
+) -> adw::ComboRow {
     let model = gtk::StringList::new(items);
-    let r = adw::ComboRow::builder().title(title).model(&model).selected(selected).build();
+    let r = adw::ComboRow::builder()
+        .title(title)
+        .model(&model)
+        .selected(selected)
+        .build();
     if let Some(s) = subtitle {
         r.set_subtitle(s);
     }
@@ -284,7 +328,11 @@ pub fn cards_page() -> (gtk::ScrolledWindow, gtk::Box) {
     content.set_margin_bottom(24);
     content.set_margin_start(18);
     content.set_margin_end(18);
-    let clamp = adw::Clamp::builder().maximum_size(900).tightening_threshold(700).child(&content).build();
+    let clamp = adw::Clamp::builder()
+        .maximum_size(900)
+        .tightening_threshold(700)
+        .child(&content)
+        .build();
     let scrolled = gtk::ScrolledWindow::builder()
         .hscrollbar_policy(gtk::PolicyType::Never)
         .child(&clamp)

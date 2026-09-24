@@ -28,6 +28,7 @@ chrono.workspace = true
 image.workspace = true
 bytes.workspace = true
 url.workspace = true
+uuid.workspace = true
 
 [build-dependencies]
 glib-build-tools = "0.22"

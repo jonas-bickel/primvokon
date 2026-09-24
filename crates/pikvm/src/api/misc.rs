@@ -12,7 +12,12 @@ impl MiscApi<'_> {
     pub async fn prometheus_metrics(&self) -> Result<String> {
         let r = self
             .0
-            .call_ok(Method::GET, "/api/export/prometheus/metrics", &Query::new(), Body::Empty)
+            .call_ok(
+                Method::GET,
+                "/api/export/prometheus/metrics",
+                &Query::new(),
+                Body::Empty,
+            )
             .await?;
         Ok(r.text())
     }

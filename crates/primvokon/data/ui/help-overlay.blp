@@ -1,0 +1,43 @@
+using Gtk 4.0;
+
+ShortcutsWindow help_overlay {
+  modal: true;
+
+  ShortcutsSection {
+    section-name: "shortcuts";
+    max-height: 12;
+
+    ShortcutsGroup {
+      title: C_("shortcut window", "General");
+
+      ShortcutsShortcut {
+        title: C_("shortcut window", "Preferences");
+        action-name: "app.preferences";
+      }
+
+      ShortcutsShortcut {
+        title: C_("shortcut window", "Keyboard shortcuts");
+        action-name: "win.show-help-overlay";
+      }
+
+      ShortcutsShortcut {
+        title: C_("shortcut window", "Quit");
+        action-name: "app.quit";
+      }
+    }
+
+    ShortcutsGroup {
+      title: C_("shortcut window", "Console");
+
+      ShortcutsShortcut {
+        title: C_("shortcut window", "Toggle fullscreen");
+        action-name: "win.fullscreen";
+      }
+
+      ShortcutsShortcut {
+        title: C_("shortcut window", "Type text on the host");
+        action-name: "win.paste-text";
+      }
+    }
+  }
+}
