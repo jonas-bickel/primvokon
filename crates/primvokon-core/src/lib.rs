@@ -10,6 +10,7 @@ pub mod runtime;
 pub mod screen;
 pub mod secrets;
 pub mod settings;
+pub mod sleep;
 pub mod storage;
 pub mod watcher;
 

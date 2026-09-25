@@ -63,7 +63,7 @@ Tasks reference stories (`STORIES.md`) and features (`FEATURES.md`).
 
 ## Milestone 6 – Recall (F)
 - [x] T-600 Capture loop + dedup + storage (F1)
-- [x] T-601 Summariser: startup / resume / manual scheduling (F2) — resume is detected by a wall-clock jump; a logind `PrepareForSleep` hook is deferred
+- [x] T-601 Summariser: startup / resume / manual scheduling (F2) — resume comes from logind `PrepareForSleep`, with a wall-clock jump as fallback
 - [x] T-602 Recall page: day list, summary, raw timeline, export (F3)
 - [x] T-603 Retention pruning (F4)
 
@@ -82,7 +82,7 @@ Tasks reference stories (`STORIES.md`) and features (`FEATURES.md`).
 
 ## Deferred / follow-ups
 - [ ] T-900 Draw watch regions directly on a snapshot (currently a text field)
-- [ ] T-901 logind `PrepareForSleep` signal for resume detection (wall-clock jump is used today)
+- [x] T-901 logind `PrepareForSleep` signal for resume detection (wall-clock jump remains the fallback without logind)
 - [ ] T-902 Verify against a real PiKVM Switch (state schema was derived from kvmd source, docs say FIXME)
 - [ ] T-903 Streaming responses / progress for long agent turns
 - [ ] T-904 Flatpak manifest

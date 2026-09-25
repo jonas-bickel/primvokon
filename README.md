@@ -23,6 +23,25 @@ Product definition: [`docs/FEATURES.md`](docs/FEATURES.md), [`docs/STORIES.md`](
 task tracker [`docs/TASKS.md`](docs/TASKS.md), [`docs/API-COVERAGE.md`](docs/API-COVERAGE.md),
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
+## Scope decisions
+
+The brief named two stacks: a Rust + gtk-rs + libadwaita + Blueprint app for Linux, and
+React Native Paper components with an Android-first build that also runs on the web. One product
+cannot be both, so PRIMVOKON is the **native Linux desktop app** the brief opened with. What that
+means for the other points:
+
+- **Not built:** React Native Paper components, an Android build, a web build. The UI is
+  libadwaita (Material-style card/list layouts, light/dark themes, responsive breakpoints).
+- **Kept portable on purpose:** `crates/pikvm` and `crates/primvokon-core` contain no GTK code
+  (API client, websocket, watcher, recall, agent, AI providers, ntfy). A mobile or web front end
+  can reuse them through FFI/WASM or re-implement the same contracts; `docs/API-COVERAGE.md`
+  and `docs/STORIES.md` are the shared specification.
+- **Everything else in the brief is implemented:** all documented PiKVM endpoints with
+  essential/advanced tiers, connection setup entirely in the UI (URL, credentials, auth method,
+  token, 2FA), live stream on the main page, the ntfy screen watcher, screen recall with daily
+  summaries on startup/resume, the agent with ask/auto modes, Claude/OpenAI/OpenRouter keys and
+  per-capability switches.
+
 ## Build
 
 Dependencies (Ubuntu 24.04 / Debian names): `libgtk-4-dev` (≥ 4.14), `libadwaita-1-dev` (≥ 1.5),

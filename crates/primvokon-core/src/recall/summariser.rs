@@ -115,8 +115,11 @@ pub enum SchedulerEvent {
     Error(String),
 }
 
-/// Runs pending summaries on startup, after a resume from suspend (detected as a wall-clock
-/// jump) and after midnight.
+/// Runs pending summaries on startup, after a resume from suspend and after midnight.
+///
+/// Resume is detected through systemd-logind's `PrepareForSleep` signal when the system bus is
+/// reachable (see [`crate::sleep`]); a wall-clock jump between ticks is the fallback for systems
+/// without logind.
 pub struct Scheduler {
     pub summariser: Arc<Mutex<Option<Summariser>>>,
     cancel: CancellationToken,
@@ -139,21 +142,38 @@ impl Scheduler {
             if run_on_startup {
                 Self::run(&shared, &tx).await;
             }
+            let mut resumes = crate::sleep::resume_events().await;
             let mut last_tick = std::time::Instant::now();
             let mut last_day = today();
             loop {
+                let mut resumed = false;
                 tokio::select! {
                     _ = cancel.cancelled() => break,
                     _ = tokio::time::sleep(TICK) => {}
+                    event = async {
+                        match resumes.as_mut() {
+                            Some(rx) => rx.recv().await,
+                            None => std::future::pending().await,
+                        }
+                    } => {
+                        match event {
+                            Some(()) => resumed = true,
+                            // logind went away: keep the wall-clock fallback only.
+                            None => resumes = None,
+                        }
+                    }
                 }
                 let now = std::time::Instant::now();
-                let slept = now.duration_since(last_tick) > TICK + SLEEP_GAP;
+                // Only trust the wall-clock heuristic when logind is not reporting resumes.
+                let slept = resumes.is_none() && now.duration_since(last_tick) > TICK + SLEEP_GAP;
                 last_tick = now;
                 let day = today();
                 let rolled = day != last_day;
                 last_day = day;
-                if slept || rolled {
-                    tracing::info!("recall scheduler: resume={slept} new_day={rolled}, checking pending summaries");
+                if resumed || slept || rolled {
+                    tracing::info!(
+                        "recall scheduler: logind_resume={resumed} clock_jump={slept} new_day={rolled}, checking pending summaries"
+                    );
                     Self::run(&shared, &tx).await;
                 }
             }

@@ -22,6 +22,7 @@ crates/
     recall/         CaptureService, Summariser, scheduling (startup / resume / manual), retention
     agent/          Tools, AgentLoop (ask / auto), approval channel, playbooks, budgets
     runtime.rs      Shared tokio runtime
+    sleep.rs        logind PrepareForSleep listener (resume detection for the recall scheduler)
   primvokon/        GTK4 + libadwaita application
     build.rs        blueprint-compiler → .ui → GResource
     data/ui/*.blp   Blueprint templates

@@ -17,6 +17,11 @@ Each feature has an ID (`F-<area>-<n>`) that the stories in `STORIES.md` and the
 Every optional capability (Watcher, Recall, Agent, per-tool agent capabilities, ntfy, AI vision)
 can be switched off individually (see §8).
 
+> **Stack decision.** The brief mixed a Rust/GTK Linux app with React Native Paper, Android and
+> web targets. PRIMVOKON is the native Linux app; the React Native/Android/web parts are out of
+> scope for this codebase. The `pikvm` and `primvokon-core` crates are GTK-free so that a future
+> mobile/web client can share the domain layer and this specification. See README → Scope decisions.
+
 ---
 
 ## 1. Connection & Security (`F-CON`)
