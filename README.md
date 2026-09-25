@@ -23,40 +23,43 @@ Product definition: [`docs/FEATURES.md`](docs/FEATURES.md), [`docs/STORIES.md`](
 task tracker [`docs/TASKS.md`](docs/TASKS.md), [`docs/API-COVERAGE.md`](docs/API-COVERAGE.md),
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-## Scope decisions
+## Install on your Linux machine
 
-The brief named two stacks: a Rust + gtk-rs + libadwaita + Blueprint app for Linux, and
-React Native Paper components with an Android-first build that also runs on the web. One product
-cannot be both, so PRIMVOKON is the **native Linux desktop app** the brief opened with. What that
-means for the other points:
+PRIMVOKON is a GTK4/libadwaita app; it is built from source with Cargo.
 
-- **Not built:** React Native Paper components, an Android build, a web build. The UI is
-  libadwaita (Material-style card/list layouts, light/dark themes, responsive breakpoints).
-- **Kept portable on purpose:** `crates/pikvm` and `crates/primvokon-core` contain no GTK code
-  (API client, websocket, watcher, recall, agent, AI providers, ntfy). A mobile or web front end
-  can reuse them through FFI/WASM or re-implement the same contracts; `docs/API-COVERAGE.md`
-  and `docs/STORIES.md` are the shared specification.
-- **Everything else in the brief is implemented:** all documented PiKVM endpoints with
-  essential/advanced tiers, connection setup entirely in the UI (URL, credentials, auth method,
-  token, 2FA), live stream on the main page, the ntfy screen watcher, screen recall with daily
-  summaries on startup/resume, the agent with ask/auto modes, Claude/OpenAI/OpenRouter keys and
-  per-capability switches.
+1. Install the build dependencies (GTK ≥ 4.14, libadwaita ≥ 1.5, blueprint-compiler, OpenSSL):
 
-## Build
+   ```sh
+   # Ubuntu 24.04 / Debian 13
+   sudo apt install build-essential pkg-config libgtk-4-dev libadwaita-1-dev blueprint-compiler libssl-dev
+   # Fedora
+   sudo dnf install gcc pkgconf-pkg-config gtk4-devel libadwaita-devel blueprint-compiler openssl-devel
+   # Arch
+   sudo pacman -S base-devel pkgconf gtk4 libadwaita blueprint-compiler openssl
+   ```
 
-Dependencies (Ubuntu 24.04 / Debian names): `libgtk-4-dev` (≥ 4.14), `libadwaita-1-dev` (≥ 1.5),
-`blueprint-compiler`, `libssl-dev`, `pkg-config`, Rust ≥ 1.85.
+2. Install Rust ≥ 1.85 if you do not have it: `curl https://sh.rustup.rs -sSf | sh`, then open a new shell.
 
-```sh
-sudo apt install libgtk-4-dev libadwaita-1-dev blueprint-compiler libssl-dev pkg-config
-cargo build --release
-./target/release/primvokon
-```
+3. Clone and build:
+
+   ```sh
+   git clone https://github.com/jonas-bickel/primvokon.git
+   cd primvokon
+   cargo build --release          # binary: target/release/primvokon
+   ```
+
+4. Install the binary, desktop entry and icons (default `PREFIX=/usr/local`; use `PREFIX=$HOME/.local` for a user-only install without sudo):
+
+   ```sh
+   sudo make install              # or: make install PREFIX=$HOME/.local
+   ```
+
+   PRIMVOKON then appears in your app launcher; `make uninstall` removes it again.
+
+To try it without installing, run `./target/release/primvokon` directly.
 
 If `blueprint-compiler` on `PATH` cannot import PyGObject, point the build at a working
-interpreter: `BLUEPRINT_COMPILER="python3.12 /usr/bin/blueprint-compiler" cargo build`.
-
-Install the desktop entry and icon: `make install` (uses `PREFIX`, default `/usr/local`).
+interpreter: `BLUEPRINT_COMPILER="python3.12 /usr/bin/blueprint-compiler" cargo build --release`.
 
 ## Run
 
