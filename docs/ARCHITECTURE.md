@@ -30,7 +30,7 @@ crates/
     src/window.rs   Main window (view switcher, breakpoint, toasts)
     src/state/      KvmStateObject (GObject facade over KvmState), ConnectionManager
     src/pages/      console, control (cards), watch, recall, agent
-    src/prefs/      Preferences dialog pages: connection, capabilities, ai, notifications, watcher, recall, agent
+    src/prefs/      Preferences dialog pages: connection, capabilities, ai, notifications, watcher, recall, agent; regions.rs = snapshot region editor
     src/widgets/    Reusable widgets (StatusPill, KeyValueRow, ApprovalCard, VideoView)
 ```
 

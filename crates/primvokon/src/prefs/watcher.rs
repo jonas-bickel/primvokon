@@ -75,20 +75,42 @@ pub fn page() -> adw::PreferencesPage {
     bind_spin(&pixel_thr, |s, v| s.watcher.pixel_threshold = v);
     let ignore = util::entry_row(&t, "Ignore phrases (comma separated)", &w.ignore_phrases.join(","));
     bind_entry(&ignore, |s, v| s.watcher.ignore_phrases = split_list(&v));
-    let regions_text = w
-        .regions
-        .iter()
-        .map(|r| format!("{},{},{},{}", r.left, r.top, r.width, r.height))
-        .collect::<Vec<_>>()
-        .join("; ");
+    let regions_text = format_regions(&w.regions);
     let regions = util::entry_row(
         &t,
         "Watch regions: left,top,width,height; … (empty = whole screen)",
         &regions_text,
     );
     bind_entry(&regions, |s, v| s.watcher.regions = parse_regions(&v));
+    let draw = util::button("Draw on snapshot…");
+    {
+        let regions = regions.clone();
+        draw.connect_clicked(move |b| {
+            let current = state().settings().watcher.regions;
+            let regions = regions.clone();
+            super::regions::open(b, current, move |list| {
+                regions.set_text(&format_regions(&list));
+                state().update_settings(|s| s.watcher.regions = list);
+                util::toast("Watch regions saved");
+            });
+        });
+    }
+    util::button_row(
+        &t,
+        "Region editor",
+        Some("Drag rectangles over a live snapshot of the host screen"),
+        &draw,
+    );
     page.add(&t);
     page
+}
+
+pub fn format_regions(regions: &[Region]) -> String {
+    regions
+        .iter()
+        .map(|r| format!("{},{},{},{}", r.left, r.top, r.width, r.height))
+        .collect::<Vec<_>>()
+        .join("; ")
 }
 
 pub fn parse_regions(text: &str) -> Vec<Region> {

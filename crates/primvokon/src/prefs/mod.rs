@@ -7,6 +7,7 @@ mod capabilities;
 mod connection;
 mod notifications;
 mod recall;
+mod regions;
 mod watcher;
 
 use adw::prelude::*;

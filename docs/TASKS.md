@@ -58,7 +58,7 @@ Tasks reference stories (`STORIES.md`) and features (`FEATURES.md`).
 ## Milestone 5 – Watcher + ntfy (E)
 - [x] T-500 ntfy client + notifications preferences + test (E1)
 - [x] T-501 Watcher service: sampling loop, detectors (OCR diff, pixel diff, AI classifier, combined) (E2)
-- [x] T-502 Regions, cooldown, ignore list (E3) — regions are entered as `left,top,width,height` in Preferences; drawing them on a snapshot is deferred
+- [x] T-502 Regions, cooldown, ignore list (E3) — regions can be typed as `left,top,width,height` or drawn on a snapshot (T-900)
 - [x] T-503 Watch page: enable, status, event log (E4)
 
 ## Milestone 6 – Recall (F)
@@ -81,7 +81,7 @@ Tasks reference stories (`STORIES.md`) and features (`FEATURES.md`).
 - [x] T-801 `cargo clippy -D warnings`, `cargo fmt`
 
 ## Deferred / follow-ups
-- [ ] T-900 Draw watch regions directly on a snapshot (currently a text field)
+- [x] T-900 Draw watch regions directly on a snapshot (Preferences → Watcher → *Draw on snapshot…*)
 - [x] T-901 logind `PrepareForSleep` signal for resume detection (wall-clock jump remains the fallback without logind)
 - [ ] T-902 Verify against a real PiKVM Switch (state schema was derived from kvmd source, docs say FIXME)
 - [ ] T-903 Streaming responses / progress for long agent turns
